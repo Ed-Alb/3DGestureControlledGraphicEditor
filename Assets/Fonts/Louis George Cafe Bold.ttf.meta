@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: ece87b01bf959f842a31d87d64354458
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Louis George Cafe
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: a69da0ec8c80bad4badb50f6079d0178, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
