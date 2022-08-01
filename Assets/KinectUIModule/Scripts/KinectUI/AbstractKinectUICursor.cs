@@ -26,12 +26,15 @@ public abstract class AbstractKinectUICursor : MonoBehaviour {
         GetComponent<CanvasGroup>().interactable = false;
         // image component
         _image = GetComponent<Image>();
+        // Debug.Log(_image.sprite.name);
     }
 
     public virtual void Update()
     {
+        /*if (_data != null)
+            Debug.Log(_data.trackingHandType);
         if (_data == null || !_data.IsTracking) return;
-        ProcessData();
+        ProcessData();*/
     }
 
     public abstract void ProcessData();

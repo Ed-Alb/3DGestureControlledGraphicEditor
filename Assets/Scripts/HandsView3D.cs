@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using Windows.Kinect;
 using Joint = Windows.Kinect.Joint;
 
-public class KinectTest : MonoBehaviour
+public class HandsView3D : MonoBehaviour
 {
     public BodySourceManager mBodySourceManager;
     public GameObject mJointObject;
@@ -46,10 +46,17 @@ public class KinectTest : MonoBehaviour
         #region Delete Kinect Bodies
 
         List<ulong> knownIds = new List<ulong>(mBodies.Keys);
+        bool delFalg = true;
         foreach (ulong trackingId in knownIds)
         {
             if (!trackedIds.Contains(trackingId))
             {
+                if (delFalg)
+                {
+                    Destroy(LHand);
+                    Destroy(RHand);
+                    delFalg = false;
+                }
                 // Destroy Body Object
                 Destroy(mBodies[trackingId]);
 
@@ -82,6 +89,20 @@ public class KinectTest : MonoBehaviour
         }
 
         #endregion
+
+        #region TestHandsPos
+
+        /*if (LHand)
+        {
+            Debug.Log(LHand.transform.position);
+        }
+
+        if (RHand)
+        {
+            Debug.Log(RHand.transform.position);
+        }*/
+
+        #endregion
     }
 
     private GameObject CreateBodyObject(Body vbody, ulong id)
@@ -97,6 +118,7 @@ public class KinectTest : MonoBehaviour
         foreach (JointType joint in _joints)
         {
             GameObject newJoint = Instantiate(mJointObject);
+            newJoint.GetComponent<Renderer>().enabled = false;
             newJoint.name = joint.ToString();
 
             newJoint.transform.parent = body.transform;
@@ -105,18 +127,16 @@ public class KinectTest : MonoBehaviour
             if (newJoint.name.Equals("HandRight"))
             {
                 Vector3 handUIPos = Camera.main.WorldToScreenPoint(newJoint.transform.position);
-                RHand = Instantiate(RHandImg, handUIPos, Quaternion.identity) as GameObject;
+                RHand = Instantiate(RHandImg, new Vector3(handUIPos.x, handUIPos.y, 0), Quaternion.identity) as GameObject;
                 RHand.name = "Right Hand";
-                RHand.transform.parent = GameObject.Find("UICanvas").transform;
-                //newJoint.GetComponent<KinectUICursor>().setHandType(KinectUIHandType.Right);
+                RHand.transform.SetParent(GameObject.Find("UICanvas").transform);
             }
             else if (newJoint.name.Equals("HandLeft"))
             {
                 Vector3 handUIPos = Camera.main.WorldToScreenPoint(newJoint.transform.position);
-                LHand = Instantiate(LHandImg, handUIPos, Quaternion.identity) as GameObject;
+                LHand = Instantiate(LHandImg, new Vector3(handUIPos.x, handUIPos.y, 0), Quaternion.identity) as GameObject;
                 LHand.name = "Left Hand";
-                LHand.transform.parent = GameObject.Find("UICanvas").transform;
-                //newJoint.GetComponent<KinectUICursor>().setHandType(KinectUIHandType.Left);
+                LHand.transform.SetParent(GameObject.Find("UICanvas").transform);
             }
         }
 
@@ -140,11 +160,11 @@ public class KinectTest : MonoBehaviour
             Vector3 handUIPos = Camera.main.WorldToScreenPoint(jointObject.transform.position);
             if (jointObject.name.Equals("HandRight"))
             {
-                RHand.transform.position = handUIPos;
+                RHand.transform.position = new Vector3(handUIPos.x, handUIPos.y, 0);
             }
             else if (jointObject.name.Equals("HandLeft"))
             {
-                LHand.transform.position = handUIPos;
+                LHand.transform.position = new Vector3(handUIPos.x, handUIPos.y, 0);
             }
         }
     }
