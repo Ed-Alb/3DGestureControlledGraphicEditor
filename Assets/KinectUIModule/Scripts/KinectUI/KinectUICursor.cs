@@ -11,7 +11,11 @@ public class KinectUICursor : AbstractKinectUICursor
     public Vector3 clickScale = new Vector3(.8f, .8f, .8f);
 
     private Vector3 _initScale;
+    private bool buttonGestureDone = false;
     private bool buttonPressed = false;
+    private bool enteredButton = false;
+
+    private bool actionDone = false;
 
     public override void Start()
     {
@@ -22,7 +26,15 @@ public class KinectUICursor : AbstractKinectUICursor
 
     public override void Update()
     {
-        
+        KeepHandsOnScreen();
+    }
+
+    private void KeepHandsOnScreen()
+    {
+        Vector3 pos = transform.position;
+        pos.x = Mathf.Clamp(pos.x, 0, Screen.width);
+        pos.y = Mathf.Clamp(pos.y, 0, Screen.height);
+        transform.position = pos;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -30,19 +42,22 @@ public class KinectUICursor : AbstractKinectUICursor
         Button b = collision.gameObject.GetComponent<Button>();
         if (b)
         {
+            enteredButton = true;
+            buttonPressed = false;
             b.OnSelect(null);
             _image.color = hoverColor;
-            buttonPressed = true;
+            buttonGestureDone = true;
         }
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
         Button b = collision.gameObject.GetComponent<Button>();
-        if (b && buttonPressed)
+        if (b && buttonPressed && buttonGestureDone)
         {
             b.onClick.Invoke();
             buttonPressed = false;
+            buttonGestureDone = false;
         }
     }
 
@@ -51,9 +66,11 @@ public class KinectUICursor : AbstractKinectUICursor
         Button b = collision.gameObject.GetComponent<Button>();
         if (b)
         {
+            enteredButton = false;
             b.OnDeselect(null);
             _image.color = normalColor;
-            buttonPressed = true;
+            buttonPressed = false;
+            _image.color = normalColor;
         }
     }
 
@@ -78,5 +95,50 @@ public class KinectUICursor : AbstractKinectUICursor
             _image.color = normalColor;
         }
         _image.transform.localScale = _initScale;
+    }
+
+    public Vector3 GetHandCursorPosition()
+    {
+        return this.transform.position;
+    }
+
+    public Color GetNormalColor()
+    {
+        return normalColor;
+    }
+
+    public Color GetHoverColor()
+    {
+        return hoverColor;
+    }
+
+    public Color GetClickColor()
+    {
+        return clickColor;
+    }
+
+    public Image GetHandImg()
+    {
+        return _image;
+    }
+
+    public bool GetEnteredButton()
+    {
+        return enteredButton;
+    }
+
+    public void SetButtonPressed(bool state)
+    {
+        this.buttonPressed = state;
+    }
+
+    public void SetActionDone(bool state)
+    {
+        this.actionDone = state;
+    }
+
+    public bool IsPerformingAction()
+    {
+        return actionDone;
     }
 }

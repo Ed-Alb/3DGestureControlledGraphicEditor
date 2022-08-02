@@ -37,59 +37,61 @@ public class SelectObject : MonoBehaviour
 
     void DetectObject()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        // Make it so that the user can choose at the beginning if he wants to
+        // use the kinect sensor or the mouse -- TODO
+        if (!GameObject.Find("Left Hand") || !GameObject.Find("Right Hand"))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            //Ray ray = Camera.main.ScreenPointToRay(GameObject.Find("Left Hand").transform.position);
+            HandleMouseDetection(ray);
+        }
+        else if (GameObject.Find("Left Hand") || GameObject.Find("Right Hand"))
+        {
+            GameObject LeftHand = GameObject.Find("Left Hand");
+            GameObject RightHand = GameObject.Find("Right Hand");
+            HandleHandsDetection(LeftHand, RightHand);
+        }
+    }
+
+    public void HandleMouseDetection(Ray ray)
+    {
         if (Input.GetMouseButtonDown(0) && selectedObj == null)
         {
-            if (Physics.Raycast(ray, out theObj))
+            ObjectSelection(ray);
+        }
+
+        // Exit Selection by pressing C
+        if (Input.GetKeyDown(KeyCode.C) && selectedObj != null)
+        {
+            ObjectDeselection();
+        }
+    }
+
+    public void HandleHandsDetection(GameObject LeftHand, GameObject RightHand)
+    {
+        Ray leftHandRay = Camera.main.ScreenPointToRay(LeftHand.GetComponent<KinectUICursor>().GetHandCursorPosition());
+        Ray rightHandRay = Camera.main.ScreenPointToRay(RightHand.GetComponent<KinectUICursor>().GetHandCursorPosition());
+
+        bool rightHandAction = RightHand.GetComponent<KinectUICursor>().IsPerformingAction();
+        bool leftHandAction = LeftHand.GetComponent<KinectUICursor>().IsPerformingAction();
+
+        if ((rightHandAction || leftHandAction) && selectedObj == null)
+        {
+            if (rightHandAction)
             {
-                if (!Utilities.IsPointerOverUIObject())
-                {
-                    if (GameObject.Find(theObj.transform.gameObject.name).GetComponent<ObjectInteraction>() != null)
-                    {
-                        selectedObj = theObj.transform.gameObject.name;
-                        lastSelectedObj = theObj.transform.gameObject.name;
-                        Camera.main.GetComponent<FreeCam>().TriggerCameraMovement(theObj.transform, true, true, 4f);
-                        theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetAction(actionType.Rotate);
-                        _objectColor = theObj.transform.gameObject.GetComponent<Renderer>().material.color;
+                ObjectSelection(rightHandRay);
+            }
 
-                        if (theObj.transform.gameObject.name.Contains("Sphere") ||
-                            theObj.transform.gameObject.name.Contains("Capsule"))
-                        {
-                            ChangeObjectMaterial(theObj.transform.gameObject, _sphereOutlineMaterial);
-                            theObj.transform.gameObject.GetComponent<Renderer>().material.SetColor("_Color", _objectColor);
-                        }
-
-                        if (theObj.transform.gameObject.name.Contains("Cube") ||
-                            theObj.transform.gameObject.name.Contains("Cylinder"))
-                        {
-                            ChangeObjectMaterial(theObj.transform.gameObject, _cubeOutlineMaterial);
-                            theObj.transform.gameObject.GetComponent<Renderer>().material.SetColor("_Color", _objectColor);
-                        }
-                    }
-                }
+            if (leftHandAction)
+            {
+                ObjectSelection(leftHandRay);
             }
         }
 
-        // Exit Selection by pressing C or by doing a gesture (TODO)
-        if (Input.GetKeyDown(KeyCode.C) && selectedObj != null)
+        bool HandsCloseAction = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>().PerformingCloseAction();
+        if (HandsCloseAction && selectedObj != null)
         {
-            if (theObj.transform.gameObject.GetComponent<ObjectInteraction>().GetAction() == actionType.Scale)
-            {
-                ScalePanel.SetActive(false);
-            }
-            Camera.main.GetComponent<FreeCam>().setMovementRotation(false, false);
-            
-            theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetAction(actionType.FreeLook);
-
-            ChangeObjectMaterial(theObj.transform.gameObject, _originalMaterial);
-            theObj.transform.gameObject.GetComponent<Renderer>().material.color = _objectColor;
-
-            selectedObj = null;
-            GameObject StatePanel = GameObject.Find("StatePanel");
-            Animator PanelAnim = StatePanel.GetComponent<Animator>();
-            PanelAnim.SetTrigger("TriggerPop");
-
-            theObj = new RaycastHit();
+            ObjectDeselection();
         }
     }
 
@@ -121,6 +123,59 @@ public class SelectObject : MonoBehaviour
     public string GetSelectedObjectName()
     {
         return selectedObj;
+    }
+
+    private void ObjectSelection(Ray ray)
+    {
+        if (Physics.Raycast(ray, out theObj))
+        {
+            if (!Utilities.IsPointerOverUIObject())
+            {
+                if (GameObject.Find(theObj.transform.gameObject.name).GetComponent<ObjectInteraction>() != null)
+                {
+                    selectedObj = theObj.transform.gameObject.name;
+                    lastSelectedObj = theObj.transform.gameObject.name;
+                    Camera.main.GetComponent<FreeCam>().TriggerCameraMovement(theObj.transform, true, true, 4f);
+                    theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetAction(actionType.Rotate);
+                    _objectColor = theObj.transform.gameObject.GetComponent<Renderer>().material.color;
+
+                    if (theObj.transform.gameObject.name.Contains("Sphere") ||
+                        theObj.transform.gameObject.name.Contains("Capsule"))
+                    {
+                        ChangeObjectMaterial(theObj.transform.gameObject, _sphereOutlineMaterial);
+                        theObj.transform.gameObject.GetComponent<Renderer>().material.SetColor("_Color", _objectColor);
+                    }
+
+                    if (theObj.transform.gameObject.name.Contains("Cube") ||
+                        theObj.transform.gameObject.name.Contains("Cylinder"))
+                    {
+                        ChangeObjectMaterial(theObj.transform.gameObject, _cubeOutlineMaterial);
+                        theObj.transform.gameObject.GetComponent<Renderer>().material.SetColor("_Color", _objectColor);
+                    }
+                }
+            }
+        }
+    }
+
+    private void ObjectDeselection()
+    {
+        if (theObj.transform.gameObject.GetComponent<ObjectInteraction>().GetAction() == actionType.Scale)
+        {
+            ScalePanel.SetActive(false);
+        }
+        Camera.main.GetComponent<FreeCam>().setMovementRotation(false, false);
+
+        theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetAction(actionType.FreeLook);
+
+        ChangeObjectMaterial(theObj.transform.gameObject, _originalMaterial);
+        theObj.transform.gameObject.GetComponent<Renderer>().material.color = _objectColor;
+
+        selectedObj = null;
+        GameObject StatePanel = GameObject.Find("StatePanel");
+        Animator PanelAnim = StatePanel.GetComponent<Animator>();
+        PanelAnim.SetTrigger("TriggerPop");
+
+        theObj = new RaycastHit();
     }
 
     void SwitchColors()

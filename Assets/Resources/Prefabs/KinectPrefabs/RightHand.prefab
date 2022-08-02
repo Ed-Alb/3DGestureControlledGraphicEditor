@@ -106,7 +106,7 @@ MonoBehaviour:
   _handType: 0
   normalColor: {r: 1, g: 1, b: 1, a: 0.29411766}
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
-  clickColor: {r: 0.5294118, g: 0.7858013, b: 1, a: 1}
+  clickColor: {r: 0.14773874, g: 0.04150939, b: 1, a: 1}
   clickScale: {x: 0.8, y: 0.8, z: 0.8}
 --- !u!58 &87225161902950994
 CircleCollider2D:

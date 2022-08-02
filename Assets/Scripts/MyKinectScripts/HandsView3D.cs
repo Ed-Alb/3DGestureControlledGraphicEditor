@@ -53,6 +53,7 @@ public class HandsView3D : MonoBehaviour
             {
                 if (delFalg)
                 {
+                    // Destroy Hands if User got too close to the camera
                     Destroy(LHand);
                     Destroy(RHand);
                     delFalg = false;
