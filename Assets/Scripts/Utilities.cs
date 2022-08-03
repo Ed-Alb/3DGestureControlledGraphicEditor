@@ -12,12 +12,33 @@ public enum actionType
     Deform
 }
 
+public enum InteractionType
+{
+    Kinect,
+    Mouse
+}
+
 public class Utilities : MonoBehaviour
 {
+    public static float LeftHandThreshold = .03f;
+    public static float RightHandThreshold = .03f;
+    public static float CloseThreshold = .15f;
+    public static float TwoFingersThreshold = .1f;
+    public static float WhiteboardThreshold = .3f;
+
     public static bool IsPointerOverUIObject()
     {
         PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
         eventDataCurrentPosition.position = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
+    }
+
+    public static bool IsHandOverUIObject(Transform HandTransform)
+    {
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+        eventDataCurrentPosition.position = new Vector2(HandTransform.position.x, HandTransform.position.y);
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
         return results.Count > 0;

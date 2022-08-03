@@ -75,14 +75,17 @@ public class SelectObject : MonoBehaviour
         bool rightHandAction = RightHand.GetComponent<KinectUICursor>().IsPerformingAction();
         bool leftHandAction = LeftHand.GetComponent<KinectUICursor>().IsPerformingAction();
 
-        if ((rightHandAction || leftHandAction) && selectedObj == null)
+        // Select Object if hand action was performed only with one hand (the one that was on the object)
+        // because if I let it consider both hands, 2 objects will be detected and one will be null or something
+        // else (depending on where the other hand was)
+        if ((rightHandAction ^ leftHandAction) && selectedObj == null)
         {
-            if (rightHandAction)
+            if (rightHandAction && !Utilities.IsHandOverUIObject(RightHand.transform))
             {
                 ObjectSelection(rightHandRay);
             }
 
-            if (leftHandAction)
+            if (leftHandAction && !Utilities.IsHandOverUIObject(LeftHand.transform))
             {
                 ObjectSelection(leftHandRay);
             }

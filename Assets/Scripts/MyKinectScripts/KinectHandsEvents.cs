@@ -12,7 +12,11 @@ public class KinectHandsEvents : MonoBehaviour
 
     private TMPro.TextMeshProUGUI _gestureText;
 
-    private bool RActionDone = false, LActionDone = false, closeActionDone = false;
+    private bool RActionDone = false;
+    private bool LActionDone = false;
+    private bool closeActionDone = false;
+    private bool TwoFingersActionDone = false;
+    private bool WhiteboardActivated = false;
 
     void Start()
     {
@@ -45,6 +49,14 @@ public class KinectHandsEvents : MonoBehaviour
         {
             _gestureText.text = "Close";
         }
+        else if (TwoFingersActionDone)
+        {
+            _gestureText.text = "Two Fingers";
+        }
+        else if (WhiteboardActivated)
+        {
+            _gestureText.text = "Whiteboard";
+        }
         else if (!RActionDone && !LActionDone && !closeActionDone)
         {
             _gestureText.text = "Normal";
@@ -56,21 +68,53 @@ public class KinectHandsEvents : MonoBehaviour
         //Debug.Log("Truly detected gesture " + e.name + " with confidence of " + e.confidence);
         if (e.name.Contains("Left") && LeftHand)
         {
-            CheckHandAction(LeftHand, e.confidence, e.name, 0.1f, "left");
+            CheckHandAction(LeftHand, e.confidence, e.name, Utilities.LeftHandThreshold, "left");
         }
         else if (e.name.Contains("Right") && RightHand)
         {
-            CheckHandAction(RightHand, e.confidence, e.name, 0.07f, "right");
+            CheckHandAction(RightHand, e.confidence, e.name, Utilities.RightHandThreshold, "right");
         }
         else if (e.name.Contains("Close"))
         {
-            CheckCloseAction(e.confidence, e.name);
+            CheckCloseAction(e.confidence, e.name, Utilities.CloseThreshold);
+        }
+        else if (e.name.Contains("Two"))
+        {
+            CheckTwoFingersAction(e.confidence, e.name, Utilities.TwoFingersThreshold);
+        }
+        else if (e.name.Contains("Whiteboard"))
+        {
+            CheckWhiteboardActivation(e.confidence, e.name, Utilities.WhiteboardThreshold);
         }
     }
 
-    private void CheckCloseAction(float confidence, string action_name)
+    private void CheckWhiteboardActivation(float confidence, string action_name, float conf_threshold)
     {
-        if (confidence > 0.15f)
+        if (confidence > conf_threshold)
+        {
+            WhiteboardActivated = true;
+        }
+        else
+        {
+            WhiteboardActivated = false;
+        }
+    }
+
+    private void CheckTwoFingersAction(float confidence, string action_name, float conf_threshold)
+    {
+        if (confidence > conf_threshold)
+        {
+            TwoFingersActionDone = true;
+        }
+        else
+        {
+            TwoFingersActionDone = false;
+        }
+    }
+
+    private void CheckCloseAction(float confidence, string action_name, float conf_threshold)
+    {
+        if (confidence > conf_threshold)
         {
             closeActionDone = true;
         }
@@ -125,5 +169,30 @@ public class KinectHandsEvents : MonoBehaviour
     public bool PerformingCloseAction()
     {
         return closeActionDone;
+    }
+
+    public bool GetRAction()
+    {
+        return this.RActionDone;
+    }
+
+    public bool GetLAction()
+    {
+        return this.LActionDone;
+    }
+
+    public bool GetCloseAction()
+    {
+        return this.closeActionDone;
+    }
+
+    public bool GetWhiteboardAction()
+    {
+        return this.WhiteboardActivated;
+    }
+
+    public bool GetTwoFingersAction()
+    {
+        return this.TwoFingersActionDone;
     }
 }

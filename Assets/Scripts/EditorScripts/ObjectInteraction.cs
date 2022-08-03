@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System.Collections;
 
 public class ObjectInteraction : MonoBehaviour
 {
@@ -29,13 +30,14 @@ public class ObjectInteraction : MonoBehaviour
     private Camera cam;
     private string selectedObj;
 
-
-
     public GameObject FloatingTextPrefab;
     public bool hideText = false;
     public GameObject FloatingText;
 
     public event EventHandler OnTextKeyPress;
+
+    private GestureDetection gestDetect;
+    private bool ObjectNameTwoFingrsAction = false;
 
     private void Start()
     {
@@ -45,7 +47,28 @@ public class ObjectInteraction : MonoBehaviour
         YScale = transform.localScale[1];
         ZScale = transform.localScale[2];
 
+        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+        if (gestDetect != null)
+        {
+            gestDetect.OnGesture += ListenForObjectNameActivateGesture;
+        }
+
         OnTextKeyPress += TriggerObjectsName;
+    }
+
+    private void ListenForObjectNameActivateGesture(GestureDetection.EventArgs e)
+    {
+        if (e.name.Contains("Two"))
+        {
+            if (e.confidence > .1f && !ObjectNameTwoFingrsAction && !WhiteboardHandler._whiteboardActive &&
+                !cam.GetComponent<SelectObject>().GetSelectedObject())
+            {
+                // Debug.Log("Color picker triggered");
+                ObjectNameTwoFingrsAction = true;
+                gestDetect.OnGesture -= ListenForObjectNameActivateGesture;
+                StartCoroutine(ReactivateObjectNameGesture());
+            }
+        }
     }
 
     public void SetAction(actionType action)
@@ -111,8 +134,9 @@ public class ObjectInteraction : MonoBehaviour
 
     private void HandleObjectsName()
     {
-        if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.P) || ObjectNameTwoFingrsAction)
         {
+            ObjectNameTwoFingrsAction = false;
             OnTextKeyPress?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -247,5 +271,11 @@ public class ObjectInteraction : MonoBehaviour
     public GameObject getFloatingText()
     {
         return FloatingText;
+    }
+
+    private IEnumerator ReactivateObjectNameGesture()
+    {
+        yield return new WaitForSeconds(2);
+        gestDetect.OnGesture += ListenForObjectNameActivateGesture;
     }
 }

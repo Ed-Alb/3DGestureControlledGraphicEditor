@@ -23,6 +23,8 @@ public class GestureDetection : MonoBehaviour
     private string databasePathLeft = "\\GesturesDatabase\\LeftAction_Left.gba";
     private string databasePathRight = "\\GesturesDatabase\\RightAction_Right.gba";
     private string databasePathClose = "\\GesturesDatabase\\CloseAction.gba";
+    private string databasePathWhiteboard = "\\GesturesDatabase\\ActWhiteboard.gba";
+    private string databasePathTwoFings = "\\GesturesDatabase\\TwoFingers.gba";
 
     public BodySourceManager _BodySource;
 
@@ -31,6 +33,9 @@ public class GestureDetection : MonoBehaviour
     private VisualGestureBuilderDatabase _gestureDatabaseLeftHand;
     private VisualGestureBuilderDatabase _gestureDatabaseRightHand;
     private VisualGestureBuilderDatabase _gestureDatabaseClose;
+    private VisualGestureBuilderDatabase _gestureDatabaseWhiteboard;
+    private VisualGestureBuilderDatabase _gestureDatabaseTwoFings;
+
     private VisualGestureBuilderFrameSource _gestureFrameSource;
     private VisualGestureBuilderFrameReader _gestureFrameReader;
 
@@ -44,6 +49,8 @@ public class GestureDetection : MonoBehaviour
         _gestureDatabaseLeftHand = VisualGestureBuilderDatabase.Create(desktopPath + databasePathLeft);
         _gestureDatabaseRightHand = VisualGestureBuilderDatabase.Create(desktopPath + databasePathRight);
         _gestureDatabaseClose = VisualGestureBuilderDatabase.Create(desktopPath + databasePathClose);
+        _gestureDatabaseWhiteboard = VisualGestureBuilderDatabase.Create(desktopPath + databasePathWhiteboard);
+        _gestureDatabaseTwoFings = VisualGestureBuilderDatabase.Create(desktopPath + databasePathTwoFings);
         
         _gestureFrameSource = VisualGestureBuilderFrameSource.Create(_Sensor, 0);
         _gestureFrameReader = _gestureFrameSource.OpenReader();
@@ -54,32 +61,11 @@ public class GestureDetection : MonoBehaviour
             _gestureFrameReader.FrameArrived += GestureFrameArrived;
         }
 
-        if (_gestureDatabaseLeftHand != null)
-        {
-            foreach (Gesture g in _gestureDatabaseLeftHand.AvailableGestures)
-            {
-                //Debug.Log(g.Name);
-                _gestureFrameSource.AddGesture(g);
-            }
-        }
-
-        if (_gestureDatabaseRightHand != null)
-        {
-            foreach (Gesture g in _gestureDatabaseRightHand.AvailableGestures)
-            {
-                //Debug.Log(g.Name);
-                _gestureFrameSource.AddGesture(g);
-            }
-        }
-
-        if (_gestureDatabaseClose != null)
-        {
-            foreach (Gesture g in _gestureDatabaseClose.AvailableGestures)
-            {
-                //Debug.Log(g.Name);
-                _gestureFrameSource.AddGesture(g);
-            }
-        }
+        AddGestureFromDatabase(_gestureDatabaseLeftHand);
+        AddGestureFromDatabase(_gestureDatabaseRightHand);
+        AddGestureFromDatabase(_gestureDatabaseClose);
+        AddGestureFromDatabase(_gestureDatabaseWhiteboard);
+        AddGestureFromDatabase(_gestureDatabaseTwoFings);
     }
 
     private void Update()
@@ -149,6 +135,18 @@ public class GestureDetection : MonoBehaviour
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private void AddGestureFromDatabase(VisualGestureBuilderDatabase database)
+    {
+        if (database != null)
+        {
+            foreach (Gesture g in database.AvailableGestures)
+            {
+                //Debug.Log(g.Name);
+                _gestureFrameSource.AddGesture(g);
             }
         }
     }

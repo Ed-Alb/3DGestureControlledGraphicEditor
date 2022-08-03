@@ -53,7 +53,7 @@ public class KinectUICursor : AbstractKinectUICursor
     private void OnCollisionStay2D(Collision2D collision)
     {
         Button b = collision.gameObject.GetComponent<Button>();
-        if (b && buttonPressed && buttonGestureDone)
+        if (b && buttonPressed && buttonGestureDone && b.interactable)
         {
             b.onClick.Invoke();
             buttonPressed = false;

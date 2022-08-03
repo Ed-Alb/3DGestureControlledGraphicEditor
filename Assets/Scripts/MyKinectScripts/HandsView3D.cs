@@ -21,7 +21,6 @@ public class HandsView3D : MonoBehaviour
     {
         JointType.HandLeft,
         JointType.HandRight,
-        //JointType.Head,
     };
 
     void Update()

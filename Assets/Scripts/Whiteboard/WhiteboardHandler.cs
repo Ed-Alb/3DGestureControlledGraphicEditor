@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,6 +30,52 @@ public class WhiteboardHandler : MonoBehaviour
 
     [SerializeField] private Renderer _markerTipRenderer;
 
+    private GestureDetection gestDetect;
+    private bool whiteboardGest = false, colorGest = false;
+
+    private void Start()
+    {
+        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+        if (gestDetect != null)
+        {
+            gestDetect.OnGesture += ListenForWhiteboardActivateGesture;
+            gestDetect.OnGesture += ListenForColorGesture;
+        }
+    }
+
+    private void ListenForWhiteboardActivateGesture(GestureDetection.EventArgs e)
+    {
+        // if I did the gesture that activated the whiteboard, then
+        // I stop listening to the event and wait for 2 seconds if I
+        // want to do the gesture again, so that I doesn't switch
+        // between whiteboard and normal view forever
+        if (e.name.Contains("Whiteboard"))
+        {
+            if (e.confidence > Utilities.WhiteboardThreshold && !whiteboardGest &&
+                !Camera.main.transform.gameObject.GetComponent<SelectObject>().GetSelectedObject())
+            {
+                // Debug.Log("Whiteboard triggered");
+                whiteboardGest = true;
+                gestDetect.OnGesture -= ListenForWhiteboardActivateGesture;
+                StartCoroutine(ReactivateWhiteGesture());
+            }
+        }
+    }
+
+    private void ListenForColorGesture(GestureDetection.EventArgs e)
+    {
+        if (e.name.Contains("Two"))
+        {
+            if (e.confidence > Utilities.TwoFingersThreshold && !colorGest && _whiteboardActive)
+            {
+                // Debug.Log("Color picker triggered");
+                colorGest = true;
+                gestDetect.OnGesture -= ListenForColorGesture;
+                StartCoroutine(ReactivateColorGesture());
+            }
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -43,8 +90,10 @@ public class WhiteboardHandler : MonoBehaviour
             ExitWhiteboard();
         }
 
-        if (Input.GetKeyDown(KeyCode.T) && !cam.transform.gameObject.GetComponent<SelectObject>().GetSelectedObject())
+        if ((Input.GetKeyDown(KeyCode.T) || whiteboardGest) 
+            && !cam.transform.gameObject.GetComponent<SelectObject>().GetSelectedObject())
         {
+            whiteboardGest = false;
             _whiteboardActive = !_whiteboardActive;
 
             if (!_whiteboardActive)
@@ -116,8 +165,10 @@ public class WhiteboardHandler : MonoBehaviour
         AdjustPenSizeImage(penImageScale);
 
         // Trigger apparition of ColorPicker while using the whiteboard
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.C) || colorGest)
         {
+            // Debug.Log("Color Picker Triggered");
+            colorGest = false;
             _colorPickerActive = !_colorPickerActive;
             _colorPicker.GetComponent<Image>().gameObject.SetActive(_colorPickerActive);
 
@@ -157,5 +208,17 @@ public class WhiteboardHandler : MonoBehaviour
                 component.gameObject.GetComponent<Renderer>().enabled = state;
             }
         }
+    }
+
+    private IEnumerator ReactivateWhiteGesture()
+    {
+        yield return new WaitForSeconds(2);
+        gestDetect.OnGesture += ListenForWhiteboardActivateGesture;
+    }
+    
+    private IEnumerator ReactivateColorGesture()
+    {
+        yield return new WaitForSeconds(2);
+        gestDetect.OnGesture += ListenForColorGesture;
     }
 }

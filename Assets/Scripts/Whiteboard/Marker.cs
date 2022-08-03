@@ -7,6 +7,8 @@ public class Marker : MonoBehaviour
 
     Vector3 pos;
     public float zOffset = 2f;
+    public float pushedPos = 2f;
+    public float normalPos = 4f;
 
     [SerializeField] private Transform _tip;
     private Transform _handle;
@@ -26,9 +28,13 @@ public class Marker : MonoBehaviour
     private bool _touchedLastFrame;
 
     private float _penImageScale = 25f;
+    private KinectHandsEvents handsEvents;
+
+    private InteractionType interaction = InteractionType.Kinect;
 
     private void Start()
     {
+        handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
         _renderer = _tip.GetComponent<Renderer>();
         _colors = Enumerable.Repeat(_renderer.material.color, _penSize * _penSize).ToArray();
         _tipHeight = _tip.localScale.y;
@@ -49,8 +55,8 @@ public class Marker : MonoBehaviour
 
             if (isActive())
             {
-                ControlMarker();
-                FollowMouse();
+                ControlMarker(this.interaction);
+                FollowMouse(this.interaction);
                 _colors = Enumerable.Repeat(_renderer.material.color, _penSize * _penSize).ToArray();
             }
 
@@ -69,36 +75,79 @@ public class Marker : MonoBehaviour
         }
     }
 
-    public void FollowMouse()
+    public void FollowMouse(InteractionType interaction)
     {
-        pos = Input.mousePosition;
-        pos.z = zOffset;
-        transform.position = Camera.main.ScreenToWorldPoint(pos);
+        if (interaction == InteractionType.Mouse)
+        {
+            pos = Input.mousePosition;
+            pos.z = zOffset;
+            transform.position = Camera.main.ScreenToWorldPoint(pos);
+        }
+        else if (interaction == InteractionType.Kinect)
+        {
+            if (handsEvents.GetRAction() && handsEvents.GetLAction()) { return; }
+            else if (handsEvents.GetRAction())
+            {
+                pos = GameObject.Find("Right Hand").transform.position;
+                pos.z = zOffset;
+                transform.position = Camera.main.ScreenToWorldPoint(pos);
+            }
+            else if (handsEvents.GetLAction())
+            {
+                pos = GameObject.Find("Left Hand").transform.position;
+                pos.z = zOffset;
+                transform.position = Camera.main.ScreenToWorldPoint(pos);
+            }
+        }
     }
 
-    public void ControlMarker()
+    public void ControlMarker(InteractionType interaction)
     {
-        if (Input.GetMouseButtonDown(0))
+        if (interaction == InteractionType.Mouse)
         {
-            zOffset += 2f;
-        }
+            if (Input.GetMouseButtonDown(0))
+            {
+                zOffset += 2f;
+            }
 
-        if (Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonUp(0))
+            {
+                zOffset -= 2f;
+                _whiteboard = null;
+                _touchedLastFrame = false;
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                Draw(Input.mousePosition);
+            }
+        }
+        else if (interaction == InteractionType.Kinect)
         {
-            zOffset -= 2f;
+            if (handsEvents.GetRAction() && handsEvents.GetLAction()) { return; }
+            else if (handsEvents.GetRAction())
+            {
+                zOffset = pushedPos;
+                pos = GameObject.Find("Right Hand").transform.position;
+                Draw(pos);
+                return;
+            }
+            else if (handsEvents.GetLAction())
+            {
+                zOffset = pushedPos;
+                pos = GameObject.Find("Left Hand").transform.position;
+                Draw(pos);
+                return;
+            }
+            zOffset = normalPos;
             _whiteboard = null;
             _touchedLastFrame = false;
         }
-
-        if (Input.GetMouseButton(0))
-        {
-            Draw();
-        }
     }
 
-    private void Draw()
+    private void Draw(Vector3 positionToDraw)
     {
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out _touch))
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(positionToDraw), out _touch))
         {
             if (_touch.transform.CompareTag("Whiteboard"))
             {

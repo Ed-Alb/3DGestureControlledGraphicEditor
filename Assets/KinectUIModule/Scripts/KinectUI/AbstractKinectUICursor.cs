@@ -24,17 +24,12 @@ public abstract class AbstractKinectUICursor : MonoBehaviour {
         // Make sure we dont block raycasts
         GetComponent<CanvasGroup>().blocksRaycasts = false;
         GetComponent<CanvasGroup>().interactable = false;
-        // image component
+        // image component of the hand
         _image = GetComponent<Image>();
-        // Debug.Log(_image.sprite.name);
     }
 
     public virtual void Update()
     {
-        /*if (_data != null)
-            Debug.Log(_data.trackingHandType);
-        if (_data == null || !_data.IsTracking) return;
-        ProcessData();*/
     }
 
     public abstract void ProcessData();

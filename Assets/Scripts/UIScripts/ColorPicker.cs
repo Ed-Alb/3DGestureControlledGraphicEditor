@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
-using TMPro;
+using System.Collections;
 
 [Serializable]
 public class ColorEvent : UnityEvent<Color> { }
@@ -27,8 +27,14 @@ public class ColorPicker : MonoBehaviour
 
     public ColorEvent OnColorSelect;
 
+    private InteractionType interaction;
+    private GestureDetection gestDetect;
+    private bool colorPicked = false;
+
     void Start()
     {
+        interaction = InteractionType.Kinect;
+
         cam = Camera.main;
 
         _rect = GetComponent<RectTransform>();
@@ -36,12 +42,41 @@ public class ColorPicker : MonoBehaviour
         _colorTexture = GetComponent<Image>().mainTexture as Texture2D;
 
         _markerTipRenderer = _markerTip.GetComponent<Renderer>();
+
+        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+        if (gestDetect != null)
+        {
+            gestDetect.OnGesture += ListenForColorPick;
+        }
     }
 
+    private void ListenForColorPick(GestureDetection.EventArgs e)
+    {
+        if (e.name.Contains("Left"))
+        {
+            if (e.confidence > Utilities.LeftHandThreshold && !colorPicked)
+            {
+                colorPicked = true;
+                /*gestDetect.OnGesture -= ListenForColorPick;
+                StartCoroutine(ReactivateColorPickListener());*/
+            }
+        }
+    }
 
     void Update()
     {
-        if (RectTransformUtility.RectangleContainsScreenPoint(_rect, Input.mousePosition))
+        bool insideRect = false;
+        if (interaction == InteractionType.Kinect)
+        {
+            Vector3 leftHandPos = GameObject.Find("Left Hand").transform.position;
+            insideRect = RectTransformUtility.RectangleContainsScreenPoint(_rect, leftHandPos);
+        }
+        else if (interaction == InteractionType.Mouse)
+        {
+            insideRect = RectTransformUtility.RectangleContainsScreenPoint(_rect, Input.mousePosition);
+        }
+        
+        if (insideRect)
         {
             if (WhiteboardHandler._whiteboardActive)
             {
@@ -71,8 +106,17 @@ public class ColorPicker : MonoBehaviour
 
     public void HandleColorSelection()
     {
-        Vector2 delta;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(_rect, Input.mousePosition, null, out delta);
+        Vector2 delta = new Vector2(0, 0);
+        if (interaction == InteractionType.Kinect)
+        {
+            Vector3 leftHandPos = GameObject.Find("Left Hand").transform.position;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_rect, leftHandPos, null, out delta);
+        }
+        else if (interaction == InteractionType.Mouse)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_rect, Input.mousePosition, null, out delta);
+        }
+        
         float width = _rect.rect.width;
         float height = _rect.rect.height;
         delta += new Vector2(width * .5f, height * .5f);
@@ -100,8 +144,9 @@ public class ColorPicker : MonoBehaviour
             Utilities.PreviewMarkerPanelColor(c, _penPanelImage);
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) || colorPicked)
         {
+            colorPicked = false;
             if (WhiteboardHandler._whiteboardActive)
             {
                 // What to do if the colorPicker is used on the marker
@@ -114,4 +159,10 @@ public class ColorPicker : MonoBehaviour
             }
         }
     }
+
+    /*private IEnumerator ReactivateColorPickListener()
+    {
+        yield return new WaitForSeconds(2);
+        gestDetect.OnGesture += ListenForColorPick;
+    }*/
 }
