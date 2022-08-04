@@ -47,7 +47,7 @@ public class ObjectInteraction : MonoBehaviour
 
     private void Start()
     {
-        interaction = InteractionType.Mouse;
+        interaction = InteractionType.Kinect;
         action = actionType.FreeLook;
         cam = GameObject.Find("Main Camera").GetComponent<Camera>();
         XScale = transform.localScale[0];
@@ -168,9 +168,10 @@ public class ObjectInteraction : MonoBehaviour
                     {
                         HandleMouseDragging();
                     }
-                    else if (interaction == InteractionType.Kinect)
+                    else if (interaction == InteractionType.Kinect &&
+                        !Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform))
                     {
-                        Debug.Log("Kinect Drag");
+                        //Debug.Log("Kinect Drag");
                         HandleKinectDragging();
                     }
                 }
@@ -186,6 +187,7 @@ public class ObjectInteraction : MonoBehaviour
             HandleScaling();
         }
 
+        this.draggingTranslation = false;
         if (this.draggingTranslation == false)
         {
             moveObjectTowardsCamera();
@@ -258,12 +260,14 @@ public class ObjectInteraction : MonoBehaviour
 
     private void HandleKinectDragging()
     {
-        /*if (handsEvents.GetRAction())
+        if (handsEvents.GetRAction())
         {
-            Debug.Log("Should Move");
-            Vector3 RightHandPos = cam.ScreenToWorldPoint(handsViewDepth.RightHandPosition());
-            transform.position = new Vector3(RightHandPos.x, RightHandPos.y, transform.position.z);
-        }*/
+            Debug.Log("Right Hand Move");
+            Vector3 RHandPos = handsViewDepth.RightHandPosition();
+            Vector3 ScreenPos = new Vector3(RHandPos.x, RHandPos.y, cam.WorldToScreenPoint(transform.position).z);
+            Vector3 NewWorldPos = cam.ScreenToWorldPoint(ScreenPos);
+            transform.position = NewWorldPos;
+        }
     }
 
     private void OnMouseDown()
