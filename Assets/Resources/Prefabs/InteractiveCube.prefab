@@ -112,7 +112,7 @@ MonoBehaviour:
   maxDist: 20
   minDist: 2
   rotationSpeed: 10
-  dragSpeed: 2
+  dragSpeed: 1
   draggingRotation: 0
   draggingTranslation: 0
   draggingScale: 0

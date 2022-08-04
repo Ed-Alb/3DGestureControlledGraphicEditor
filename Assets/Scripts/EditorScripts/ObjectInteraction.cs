@@ -8,7 +8,7 @@ public class ObjectInteraction : MonoBehaviour
 {
     public float maxDist = 20f, minDist = 3f;
     public float rotationSpeed = 10f;
-    public float dragSpeed = 2f;
+    public float dragSpeed = 1f;
 
     private float XScale;
     private float YScale;
@@ -20,12 +20,12 @@ public class ObjectInteraction : MonoBehaviour
 
     public bool draggingRotation = false;
     public bool draggingTranslation = false;
-    public bool draggingScale = false;
 
     private float zCoord;
     private Vector3 mouseOff;
 
     public actionType action;
+    private InteractionType interaction;
 
     private Camera cam;
     private string selectedObj;
@@ -39,8 +39,15 @@ public class ObjectInteraction : MonoBehaviour
     private GestureDetection gestDetect;
     private bool ObjectNameTwoFingrsAction = false;
 
+    private HandsView3D handsViewDepth;
+    private bool moveTowards = false;
+    private bool moveAway = false;
+
+    private KinectHandsEvents handsEvents;
+
     private void Start()
     {
+        interaction = InteractionType.Mouse;
         action = actionType.FreeLook;
         cam = GameObject.Find("Main Camera").GetComponent<Camera>();
         XScale = transform.localScale[0];
@@ -48,12 +55,53 @@ public class ObjectInteraction : MonoBehaviour
         ZScale = transform.localScale[2];
 
         gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
-        if (gestDetect != null)
+        if (gestDetect)
         {
             gestDetect.OnGesture += ListenForObjectNameActivateGesture;
         }
 
+        handsViewDepth = GameObject.Find("HandsManager").GetComponent<HandsView3D>();
+        if (handsViewDepth)
+        {
+            handsViewDepth.depthDecode += ListenForDepth;
+        }
+
+        handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
+
         OnTextKeyPress += TriggerObjectsName;
+    }
+
+    private void ListenForDepth(HandsView3D.DepthEventArgs e)
+    {
+        bool selected = selectedObj != null && selectedObj.Equals(this.name);
+        if (selected && action == actionType.Drag)
+        {
+            if (handsEvents.GetLAction())
+            {
+                if (e.handName.Equals("Left"))
+                {
+                    if (e.actionType.Contains("Normal"))
+                    {
+                        //Debug.Log("Left Hand Normal");
+                        moveAway = false;
+                        moveTowards = false;
+                    }
+                    else if (e.actionType.Contains("Forward"))
+                    {
+                        moveAway = true;
+                    }
+                    else if (e.actionType.Contains("Backward"))
+                    {
+                        moveTowards = true;
+                    }
+                }
+            }
+            else
+            {
+                moveAway = false;
+                moveTowards = false;
+            }
+        }
     }
 
     private void ListenForObjectNameActivateGesture(GestureDetection.EventArgs e)
@@ -96,6 +144,12 @@ public class ObjectInteraction : MonoBehaviour
             this.draggingTranslation = false;
         }
 
+        if (interaction == InteractionType.Kinect && selectedObj != null && name.Equals(selectedObj))
+        {
+            this.draggingRotation = true;
+            this.draggingTranslation = true;
+        }
+
         if (!Utilities.IsPointerOverUIObject())
         {
             if (this.draggingRotation)
@@ -110,7 +164,15 @@ public class ObjectInteraction : MonoBehaviour
             {
                 if (action == actionType.Drag)
                 {
-                    HandleDragging();
+                    if (interaction == InteractionType.Mouse)
+                    {
+                        HandleMouseDragging();
+                    }
+                    else if (interaction == InteractionType.Kinect)
+                    {
+                        Debug.Log("Kinect Drag");
+                        HandleKinectDragging();
+                    }
                 }
             }
         }
@@ -189,9 +251,19 @@ public class ObjectInteraction : MonoBehaviour
         transform.rotation = Quaternion.AngleAxis(y, right) * transform.rotation;
     }
 
-    private void HandleDragging()
+    private void HandleMouseDragging()
     {
         transform.position = getMouseWorldPos() + mouseOff;
+    }
+
+    private void HandleKinectDragging()
+    {
+        /*if (handsEvents.GetRAction())
+        {
+            Debug.Log("Should Move");
+            Vector3 RightHandPos = cam.ScreenToWorldPoint(handsViewDepth.RightHandPosition());
+            transform.position = new Vector3(RightHandPos.x, RightHandPos.y, transform.position.z);
+        }*/
     }
 
     private void OnMouseDown()
@@ -240,7 +312,7 @@ public class ObjectInteraction : MonoBehaviour
                 Vector3 objPlayerDir = selObj.transform.position - Camera.main.transform.position;
                 float objPlrDistance = Vector3.Magnitude(objPlayerDir);
 
-                if (Input.GetKey(KeyCode.Z))
+                if (Input.GetKey(KeyCode.Z) || moveAway)
                 {
                     if (objPlrDistance < maxDist)
                     {
@@ -248,7 +320,7 @@ public class ObjectInteraction : MonoBehaviour
                     }
                 }
 
-                if (Input.GetKey(KeyCode.X))
+                if (Input.GetKey(KeyCode.X) || moveTowards)
                 {
                     if (objPlrDistance > minDist)
                     {

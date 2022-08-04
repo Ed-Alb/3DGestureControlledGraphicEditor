@@ -6,7 +6,18 @@ using Windows.Kinect;
 using Joint = Windows.Kinect.Joint;
 
 public class HandsView3D : MonoBehaviour
-{
+{   public struct DepthEventArgs
+    {
+        public string handName;
+        public string actionType;
+
+        public DepthEventArgs(string _handName, string _actionType)
+        {
+            handName = _handName;
+            actionType = _actionType;
+        }
+    }
+
     public BodySourceManager mBodySourceManager;
     public GameObject mJointObject;
     public GameObject LHandImg;
@@ -16,11 +27,22 @@ public class HandsView3D : MonoBehaviour
     private GameObject LHand;
     private GameObject RHand;
 
+    private float SpineDepth = 0f;
+    private float LeftHandDepth = 0f;
+    private float RightHandDepth = 0f;
+    private float minNormalInterval = 0;
+    private float maxNormalInterval = 0;
+
+
+    public delegate void DepthAction(DepthEventArgs e);
+    public event DepthAction depthDecode;
+
     private Dictionary<ulong, GameObject> mBodies = new Dictionary<ulong, GameObject>();
     private List<JointType> _joints = new List<JointType>
     {
+        JointType.SpineMid,
         JointType.HandLeft,
-        JointType.HandRight,
+        JointType.HandRight
     };
 
     void Update()
@@ -150,6 +172,7 @@ public class HandsView3D : MonoBehaviour
             Joint sourceJoint = body.Joints[_joint];
 
             Vector3 targetPosition = GetVector3FromJoint(sourceJoint);
+            float jointDepth = targetPosition.z;
             targetPosition.z = 0;
 
             Transform jointObject = bodyObject.transform.Find(_joint.ToString());
@@ -158,12 +181,26 @@ public class HandsView3D : MonoBehaviour
             jointObject.localPosition = targetPosition;
 
             Vector3 handUIPos = Camera.main.WorldToScreenPoint(jointObject.transform.position);
+            if (jointObject.name.Equals("SpineMid"))
+            {
+                //Debug.Log("Spine Depth: " + HeadDepth);
+                SpineDepth = jointDepth;
+                minNormalInterval = SpineDepth - 3f;
+                maxNormalInterval = SpineDepth - 1.5f;
+            }
             if (jointObject.name.Equals("HandRight"))
             {
+                CreateDepthEvent("Right", RightHandDepth);
+
+                RightHandDepth = jointDepth;
                 RHand.transform.position = new Vector3(handUIPos.x, handUIPos.y, 0);
             }
             else if (jointObject.name.Equals("HandLeft"))
             {
+                //Debug.Log("Left Hand Depth: " + LeftHandDepth);
+                CreateDepthEvent("Left", LeftHandDepth);
+
+                LeftHandDepth = jointDepth;
                 LHand.transform.position = new Vector3(handUIPos.x, handUIPos.y, 0);
             }
         }
@@ -172,6 +209,43 @@ public class HandsView3D : MonoBehaviour
     private Vector3 GetVector3FromJoint(Joint joint)
     {
         return new Vector3(joint.Position.X * 10, joint.Position.Y * 10, joint.Position.Z * 10);
+    }
+
+    public float GetRightHandDepth()
+    {
+        return RightHandDepth;
+    }
+
+    public float GetLeftHandDepth()
+    {
+        return LeftHandDepth;
+    }
+
+    private void CreateDepthEvent(string handType, float handTypeDepth)
+    {
+        if (minNormalInterval <= handTypeDepth && handTypeDepth <= maxNormalInterval)
+        {
+            /*Debug.Log("Left Hand Normal");*/
+            depthDecode(new DepthEventArgs(handType, "Normal Position"));
+        }
+        else if (minNormalInterval >= handTypeDepth)
+        {
+            depthDecode(new DepthEventArgs(handType, "Forward Position"));
+        }
+        else if (handTypeDepth >= maxNormalInterval)
+        {
+            depthDecode(new DepthEventArgs(handType, "Backward Position"));
+        }
+    }
+
+    public Vector3 RightHandPosition()
+    {
+        return RHand.transform.position;
+    }
+
+    public Vector3 LeftHandPosition()
+    {
+        return LHand.transform.position;
     }
 
 }
