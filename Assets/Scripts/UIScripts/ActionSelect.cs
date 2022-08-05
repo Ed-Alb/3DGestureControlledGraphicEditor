@@ -48,6 +48,7 @@ public class ActionSelect : MonoBehaviour
     private void activateDraggingMode()
     {
         Camera cam = Camera.main;
+        cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
         //Debug.Log("Drag");
         if (selectedObj != null)
@@ -60,6 +61,7 @@ public class ActionSelect : MonoBehaviour
     private void activateScalingMode()
     {
         Camera cam = Camera.main;
+        cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
         //Debug.Log("Scale");
         if (selectedObj != null)
@@ -73,6 +75,7 @@ public class ActionSelect : MonoBehaviour
     private void activateDeformingMode()
     {
         Camera cam = Camera.main;
+        cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
         //Debug.Log("Deform");
         if (selectedObj != null)

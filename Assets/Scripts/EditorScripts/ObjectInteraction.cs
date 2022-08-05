@@ -25,10 +25,12 @@ public class ObjectInteraction : MonoBehaviour
     private Vector3 mouseOff;
 
     public actionType action;
-    private InteractionType interaction;
+    public InteractionType interaction;
 
     private Camera cam;
     private string selectedObj;
+
+    #region FloatingText Variables
 
     public GameObject FloatingTextPrefab;
     public bool hideText = false;
@@ -36,20 +38,32 @@ public class ObjectInteraction : MonoBehaviour
 
     public event EventHandler OnTextKeyPress;
 
-    private GestureDetection gestDetect;
-    private bool ObjectNameTwoFingrsAction = false;
+    #endregion
 
-    private HandsView3D handsViewDepth;
+    private GestureDetection gestDetect;
+    private bool ObjectNameTwoFingersAction = false;
+
+    private HandsView3D handsView3D;
     private bool moveTowards = false;
     private bool moveAway = false;
+
+    private bool scaleZPos = false;
+    private bool scaleZNeg = false;
+
+    private float HorizontalRotationSignal;
+    private float VerticalRotationSignal;
+
+    private GameObject ArrowsHolder;
 
     private KinectHandsEvents handsEvents;
 
     private void Start()
     {
         interaction = InteractionType.Kinect;
+
         action = actionType.FreeLook;
-        cam = GameObject.Find("Main Camera").GetComponent<Camera>();
+        cam = Camera.main;
+
         XScale = transform.localScale[0];
         YScale = transform.localScale[1];
         ZScale = transform.localScale[2];
@@ -60,18 +74,22 @@ public class ObjectInteraction : MonoBehaviour
             gestDetect.OnGesture += ListenForObjectNameActivateGesture;
         }
 
-        handsViewDepth = GameObject.Find("HandsManager").GetComponent<HandsView3D>();
-        if (handsViewDepth)
+        handsView3D = GameObject.Find("HandsManager").GetComponent<HandsView3D>();
+        if (handsView3D)
         {
-            handsViewDepth.depthDecode += ListenForDepth;
+            handsView3D.depthDecode += ListenForDragDepth;
+            handsView3D.depthDecode += ListenForScaleDepth;
         }
 
         handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
 
+        ArrowsHolder = GameObject.Find("ArrowsHolder");
+
         OnTextKeyPress += TriggerObjectsName;
     }
 
-    private void ListenForDepth(HandsView3D.DepthEventArgs e)
+    #region Listeners For Depth Changes and Objects Name Activation
+    private void ListenForDragDepth(HandsView3D.DepthEventArgs e)
     {
         bool selected = selectedObj != null && selectedObj.Equals(this.name);
         if (selected && action == actionType.Drag)
@@ -104,41 +122,61 @@ public class ObjectInteraction : MonoBehaviour
         }
     }
 
+    private void ListenForScaleDepth(HandsView3D.DepthEventArgs e)
+    {
+        bool selected = selectedObj != null && selectedObj.Equals(this.name);
+        if (selected && action == actionType.Scale)
+        {
+            if (handsEvents.GetRAction())
+            {
+                if (e.handName.Equals("Left"))
+                {
+                    if (e.actionType.Contains("Normal"))
+                    {
+                        scaleZPos = false;
+                        scaleZNeg = false;
+                    }
+                    else if (e.actionType.Contains("Forward"))
+                    {
+                        scaleZPos = true;
+                    }
+                    else if (e.actionType.Contains("Backward"))
+                    {
+                        scaleZNeg = true;
+                    }
+                }
+            }
+            else
+            {
+                scaleZPos = false;
+                scaleZNeg = false;
+            }
+        }
+    }
+
     private void ListenForObjectNameActivateGesture(GestureDetection.EventArgs e)
     {
         if (e.name.Contains("Two"))
         {
-            if (e.confidence > .1f && !ObjectNameTwoFingrsAction && !WhiteboardHandler._whiteboardActive &&
-                !cam.GetComponent<SelectObject>().GetSelectedObject())
+            if (e.confidence > Utilities.TwoFingersThreshold &&
+                !cam.GetComponent<SelectObject>().GetSelectedObject() &&
+                !ObjectNameTwoFingersAction && !WhiteboardHandler._whiteboardActive)
             {
                 // Debug.Log("Color picker triggered");
-                ObjectNameTwoFingrsAction = true;
+                ObjectNameTwoFingersAction = true;
                 gestDetect.OnGesture -= ListenForObjectNameActivateGesture;
                 StartCoroutine(ReactivateObjectNameGesture());
             }
         }
     }
 
-    public void SetAction(actionType action)
-    {
-        this.action = action;
-    }
-
-    public actionType GetAction()
-    {
-        return this.action;
-    }
-
-    public Vector3 GetScale()
-    {
-        return new Vector3(XScale, YScale, ZScale);
-    }
+    #endregion
 
     private void Update()
     {
         selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
 
-        if (Input.GetMouseButtonUp(0))
+        if (interaction == InteractionType.Mouse && Input.GetMouseButtonUp(0))
         {
             this.draggingRotation = false;
             this.draggingTranslation = false;
@@ -150,57 +188,303 @@ public class ObjectInteraction : MonoBehaviour
             this.draggingTranslation = true;
         }
 
-        if (!Utilities.IsPointerOverUIObject())
+        if (action == actionType.Rotate && selectedObj.Equals(name))
         {
-            if (this.draggingRotation)
+            if (interaction == InteractionType.Mouse && this.draggingRotation &&
+                !Utilities.IsPointerOverUIObject())
             {
-                if (action == actionType.Rotate)
-                {
-                    HandleRotation();
-                }
+                HandleMouseRotation();
             }
-
-            if (this.draggingTranslation)
+            else if (interaction == InteractionType.Kinect)
             {
-                if (action == actionType.Drag)
-                {
-                    if (interaction == InteractionType.Mouse)
-                    {
-                        HandleMouseDragging();
-                    }
-                    else if (interaction == InteractionType.Kinect &&
-                        !Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform))
-                    {
-                        //Debug.Log("Kinect Drag");
-                        HandleKinectDragging();
-                    }
-                }
+                HandleHandsRotation();
             }
         }
 
-        if (action == actionType.Scale)
+        if (action == actionType.Drag && selectedObj.Equals(name))
+        {
+            moveObjectTowardsCamera();
+
+            if (interaction == InteractionType.Mouse && this.draggingTranslation
+                && !Utilities.IsPointerOverUIObject())
+            {
+                HandleDragging(interaction, Input.mousePosition);
+            }
+            else if (interaction == InteractionType.Kinect &&
+                !Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform))
+            {
+                HandleDragging(interaction, handsView3D.RightHandPosition());
+            }
+        }
+
+        if (action == actionType.Scale && selectedObj.Equals(name))
         {
             XSlider = GameObject.Find("X-Axis").GetComponent<Slider>();
             YSlider = GameObject.Find("Y-Axis").GetComponent<Slider>();
             ZSlider = GameObject.Find("Z-Axis").GetComponent<Slider>();
 
-            HandleScaling();
-        }
-
-        this.draggingTranslation = false;
-        if (this.draggingTranslation == false)
-        {
-            moveObjectTowardsCamera();
+            HandleScaling(interaction, Time.deltaTime);
         }
 
         HandleObjectsName();
     }
 
+    #region Object and Camera Rotation (For Kinect Only) Logic
+    private void HandleMouseRotation()
+    {
+        float x = Input.GetAxis("Mouse X") * rotationSpeed;
+        float y = Input.GetAxis("Mouse Y") * rotationSpeed;
+
+        Vector3 right = Vector3.Cross(cam.transform.up, transform.position - cam.transform.position);
+        Vector3 up = Vector3.Cross(transform.position - cam.transform.position, right);
+
+        transform.rotation = Quaternion.AngleAxis(-x, up) * transform.rotation;
+        transform.rotation = Quaternion.AngleAxis(y, right) * transform.rotation;
+    }
+
+    private void HandleHandsRotation()
+    {
+        if (handsEvents.GetRAction() ^ handsEvents.GetLAction())
+        {
+            // Daca e mana stanga inchisa, atunci apar in stanga 4 butoane cu sageti
+            // pe care daca se sta cu mana dreapta se va da un semnal obiectului
+            // ca trebuie sa se roteasca
+            if (handsEvents.GetRAction())
+            {
+                SetArrowsPos(-1);
+                SetArrowsActive(true);
+
+                // Debug.Log(HorizontalRotationSignal + " " + VerticalRotationSignal);
+                float x = VerticalRotationSignal * rotationSpeed;
+                float y = HorizontalRotationSignal * rotationSpeed;
+
+                Vector3 right = Vector3.Cross(cam.transform.up, transform.position - cam.transform.position);
+                Vector3 up = Vector3.Cross(transform.position - cam.transform.position, right);
+
+                transform.rotation = Quaternion.AngleAxis(-x, up) * transform.rotation;
+                transform.rotation = Quaternion.AngleAxis(y, right) * transform.rotation;
+            }
+
+            if (handsEvents.GetLAction())
+            {
+                SetArrowsPos(1);
+                SetArrowsActive(true);
+
+                cam.GetComponent<FreeCam>().RotateAroundObject(
+                    transform, Vector3.Distance(transform.position, cam.transform.position),
+                    HorizontalRotationSignal, -VerticalRotationSignal
+                );
+            }
+        }
+        else
+        {
+            SetArrowsActive(false);
+        }
+    }
+
+    private void SetArrowsPos(int dir)
+    {
+        RectTransform ArrowsRT = ArrowsHolder.GetComponent<RectTransform>();
+        ArrowsRT.localPosition = dir * Vector3.right * 500;
+    }
+
+    public void SetArrowsActive(bool state)
+    {
+        foreach (Transform arrow in ArrowsHolder.transform)
+        {
+            arrow.gameObject.SetActive(state);
+        }
+    }
+
+    #endregion
+
+    #region Object Movement / Dragging Logic + Activation of rotation On Mouse Drag
+    private void HandleDragging(InteractionType interaction, Vector3 CursorPos)
+    {
+        //transform.position = getMouseWorldPos() + mouseOff;
+        if (interaction == InteractionType.Mouse)
+        {
+            // Debug.Log("Mouse");
+            Vector3 MousePos = CursorPos;
+            Vector3 ScreenPos = new Vector3(MousePos.x, MousePos.y, cam.WorldToScreenPoint(transform.position).z);
+            Vector3 NewWorldPos = cam.ScreenToWorldPoint(ScreenPos);
+            transform.position = NewWorldPos;
+        }
+        else if (interaction == InteractionType.Kinect)
+        {
+            if (handsEvents.GetRAction())
+            {
+                // Debug.Log("Right Hand Move");
+                Vector3 RHandPos = CursorPos;
+                Vector3 ScreenPos = new Vector3(RHandPos.x, RHandPos.y, cam.WorldToScreenPoint(transform.position).z);
+                Vector3 NewWorldPos = cam.ScreenToWorldPoint(ScreenPos);
+                transform.position = NewWorldPos;
+            }
+        }
+    }
+
+    private void OnMouseDrag()
+    {
+        if (selectedObj != null && selectedObj.Equals(this.name) && interaction == InteractionType.Mouse)
+        {
+            switch (action)
+            {
+                case actionType.Drag:
+                    draggingTranslation = true;
+                    break;
+
+                case actionType.Rotate:
+                    draggingRotation = true;
+                    break;
+            }
+        }
+    }
+    #endregion
+
+    #region Object Scaling logic
+    private void HandleScaling(InteractionType interaction, float deltaTime)
+    {
+        if (interaction == InteractionType.Mouse)
+        {
+            XScale = XSlider.value;
+            YScale = YSlider.value;
+            ZScale = ZSlider.value;
+            transform.localScale = new Vector3(XScale, YScale, ZScale);
+        }
+        else if (interaction == InteractionType.Kinect)
+        {
+            float scaleSpeed = 1.5f;
+            if (handsEvents.GetRAction() && handsEvents.GetLAction())
+            {
+                if (handsView3D.RightHandPosition().y < Screen.height / 2.5 &&
+                    handsView3D.LeftHandPosition().y < Screen.height / 2.5)
+                {
+                    ZoomObject(-scaleSpeed, deltaTime);
+                }
+                else if (handsView3D.RightHandPosition().y > 2.5 * Screen.height / 4 &&
+                    handsView3D.LeftHandPosition().y > 2.5 * Screen.height / 4)
+                {
+                    ZoomObject(scaleSpeed, deltaTime);
+                }
+            }
+            else if (handsEvents.GetRAction())
+            {
+                // Daca mana dreapta e stransa, atunci asculta
+                // mana stanga in adancime pentru a scala pe Z
+                if (scaleZNeg)
+                {
+                    ZScale = ChangeAxisScale(ZSlider, ZScale, -scaleSpeed, deltaTime);
+                }
+                else if (scaleZPos)
+                {
+                    ZScale = ChangeAxisScale(ZSlider, ZScale, scaleSpeed, deltaTime);
+                }
+            }
+            else if (handsEvents.GetLAction())
+            {
+                // Daca mana stanga e stransa, atunci asculta mana
+                // dreapta pe X si Y cumva pentru a scala pe aceste axe
+                if (handsView3D.RightHandPosition().y < Screen.height / 3)
+                {
+                    YScale = ChangeAxisScale(YSlider, YScale, -scaleSpeed, deltaTime);
+                }
+                else if (handsView3D.RightHandPosition().y > 3 * Screen.height / 4)
+                {
+                    YScale = ChangeAxisScale(YSlider, YScale, scaleSpeed, deltaTime);
+                }
+
+                if (handsView3D.LeftHandPosition().x < Screen.width / 4)
+                {
+                    XScale = ChangeAxisScale(XSlider, XScale, -scaleSpeed, deltaTime);
+                }
+                else if (handsView3D.LeftHandPosition().x > .75 * Screen.width / 2)
+                {
+                    XScale = ChangeAxisScale(XSlider, XScale, scaleSpeed, deltaTime);
+                }
+            }
+            transform.localScale = new Vector3(XScale, YScale, ZScale);
+        }
+    }
+
+    private void ZoomObject(float OverallScaleSpeed, float deltaTime)
+    {
+        XScale += OverallScaleSpeed * deltaTime;
+        YScale += OverallScaleSpeed * deltaTime;
+        ZScale += OverallScaleSpeed * deltaTime;
+
+        XScale = Mathf.Clamp(XScale, XSlider.minValue, XSlider.maxValue);
+        YScale = Mathf.Clamp(YScale, YSlider.minValue, YSlider.maxValue);
+        ZScale = Mathf.Clamp(ZScale, ZSlider.minValue, ZSlider.maxValue);
+
+        XSlider.value = XScale;
+        YSlider.value = YScale;
+        ZSlider.value = ZScale;
+    }
+
+    private float ChangeAxisScale(Slider AxisSLider, float AxisScale, float AxisScaleSpeed, float deltaTime)
+    {
+        AxisScale += AxisScaleSpeed * deltaTime;
+        AxisScale = Mathf.Clamp(AxisScale, AxisSLider.minValue, AxisSLider.maxValue);
+        AxisSLider.value = AxisScale;
+        return AxisScale;
+    }
+
+    #endregion
+
+    private void moveObjectTowardsCamera()
+    {
+        if (selectedObj != null)
+        {
+            if (selectedObj.Equals(this.name))
+            {
+                GameObject selObj = GameObject.Find(selectedObj);
+                Vector3 objPlayerDir = selObj.transform.position - Camera.main.transform.position;
+                float objPlrDistance = Vector3.Magnitude(objPlayerDir);
+
+                bool awayAction = false, towardsAction = false;
+                awayAction = interaction == InteractionType.Kinect ? moveAway : Input.GetKey(KeyCode.Z);
+                towardsAction = interaction == InteractionType.Kinect ? moveTowards : Input.GetKey(KeyCode.X);
+
+                if (awayAction)
+                {
+                    if (objPlrDistance < maxDist)
+                    {
+                        selObj.transform.position += objPlayerDir * dragSpeed * Time.deltaTime;
+                    }
+                }
+
+                if (towardsAction)
+                {
+                    if (objPlrDistance > minDist)
+                    {
+                        selObj.transform.position -= objPlayerDir * dragSpeed * Time.deltaTime;
+                    }
+                }
+            }
+        }
+    }
+
+    #region Object Name Zone
+
+    public bool getHideText() {
+        return hideText;
+    }
+    
+    public bool setHideText(bool hideText) {
+        this.hideText = hideText;
+        return hideText;
+    }
+
+    public GameObject getFloatingText()
+    {
+        return FloatingText;
+    }
+
     private void HandleObjectsName()
     {
-        if (Input.GetKeyDown(KeyCode.P) || ObjectNameTwoFingrsAction)
+        if (Input.GetKeyDown(KeyCode.P) || ObjectNameTwoFingersAction)
         {
-            ObjectNameTwoFingrsAction = false;
+            ObjectNameTwoFingersAction = false;
             OnTextKeyPress?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -230,124 +514,35 @@ public class ObjectInteraction : MonoBehaviour
         return goName;
     }
 
-    private void HandleScaling()
+    #endregion
+
+    #region Setters and Getters
+    public void SetAction(actionType action)
     {
-        if (selectedObj == name)
-        {
-            XScale = XSlider.value;
-            YScale = YSlider.value;
-            ZScale = ZSlider.value;
-            transform.localScale = new Vector3(XScale, YScale, ZScale);
-        }
+        this.action = action;
     }
 
-    private void HandleRotation()
+    public actionType GetAction()
     {
-        float x = Input.GetAxis("Mouse X") * rotationSpeed;
-        float y = Input.GetAxis("Mouse Y") * rotationSpeed;
-
-        Vector3 right = Vector3.Cross(cam.transform.up, transform.position - cam.transform.position);
-        Vector3 up = Vector3.Cross(transform.position - cam.transform.position, right);
-
-        transform.rotation = Quaternion.AngleAxis(-x, up) * transform.rotation;
-        transform.rotation = Quaternion.AngleAxis(y, right) * transform.rotation;
+        return this.action;
     }
 
-    private void HandleMouseDragging()
+    public Vector3 GetScale()
     {
-        transform.position = getMouseWorldPos() + mouseOff;
+        return new Vector3(XScale, YScale, ZScale);
     }
 
-    private void HandleKinectDragging()
+    public void TriggerHorizontalSignal(float val)
     {
-        if (handsEvents.GetRAction())
-        {
-            Debug.Log("Right Hand Move");
-            Vector3 RHandPos = handsViewDepth.RightHandPosition();
-            Vector3 ScreenPos = new Vector3(RHandPos.x, RHandPos.y, cam.WorldToScreenPoint(transform.position).z);
-            Vector3 NewWorldPos = cam.ScreenToWorldPoint(ScreenPos);
-            transform.position = NewWorldPos;
-        }
-    }
-
-    private void OnMouseDown()
-    {
-        zCoord = cam.WorldToScreenPoint(gameObject.transform.position).z;
-        mouseOff = gameObject.transform.position - getMouseWorldPos();
-    }
-
-    private Vector3 getMouseWorldPos()
-    {
-        Vector3 mousePoint = Input.mousePosition;
-
-        mousePoint.z = zCoord;
-
-        return cam.ScreenToWorldPoint(mousePoint);
-    }
-
-    private void OnMouseDrag()
-    {
-        if (selectedObj != null)
-        {
-            if (selectedObj.Equals(this.name))
-            {
-                switch (action)
-                {
-                    case actionType.Drag:
-                        draggingTranslation = true;
-                        break;
-
-                    case actionType.Rotate:
-                        draggingRotation = true;
-                        break;
-                }
-            }
-        }
-    }
-
-
-    private void moveObjectTowardsCamera()
-    {
-        if (selectedObj != null)
-        {
-            if (selectedObj.Equals(this.name))
-            {
-                GameObject selObj = GameObject.Find(selectedObj);
-                Vector3 objPlayerDir = selObj.transform.position - Camera.main.transform.position;
-                float objPlrDistance = Vector3.Magnitude(objPlayerDir);
-
-                if (Input.GetKey(KeyCode.Z) || moveAway)
-                {
-                    if (objPlrDistance < maxDist)
-                    {
-                        selObj.transform.position += objPlayerDir * dragSpeed * Time.deltaTime;
-                    }
-                }
-
-                if (Input.GetKey(KeyCode.X) || moveTowards)
-                {
-                    if (objPlrDistance > minDist)
-                    {
-                        selObj.transform.position -= objPlayerDir * dragSpeed * Time.deltaTime;
-                    }
-                }
-            }
-        }
-    }
-
-    public bool getHideText() {
-        return hideText;
+        HorizontalRotationSignal = val;
     }
     
-    public bool setHideText(bool hideText) {
-        this.hideText = hideText;
-        return hideText;
+    public void TriggerVerticalSignal(float val)
+    {
+        VerticalRotationSignal = val;
     }
 
-    public GameObject getFloatingText()
-    {
-        return FloatingText;
-    }
+    #endregion
 
     private IEnumerator ReactivateObjectNameGesture()
     {

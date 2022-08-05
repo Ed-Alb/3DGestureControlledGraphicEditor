@@ -17,6 +17,8 @@ public class KinectUICursor : AbstractKinectUICursor
 
     private bool actionDone = false;
 
+    private float rotSpeed = .15f;
+
     public override void Start()
     {
         base.Start();
@@ -40,7 +42,7 @@ public class KinectUICursor : AbstractKinectUICursor
     private void OnCollisionEnter2D(Collision2D collision)
     {
         Button b = collision.gameObject.GetComponent<Button>();
-        if (b)
+        if (b && !b.tag.Equals("RotationButtons"))
         {
             enteredButton = true;
             buttonPressed = false;
@@ -48,29 +50,65 @@ public class KinectUICursor : AbstractKinectUICursor
             _image.color = hoverColor;
             buttonGestureDone = true;
         }
+        else if (b && b.tag.Equals("RotationButtons"))
+        {
+            b.OnSelect(null);
+        }
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
         Button b = collision.gameObject.GetComponent<Button>();
-        if (b && buttonPressed && buttonGestureDone && b.interactable)
+        if (b && buttonPressed && buttonGestureDone &&
+            b.interactable && !b.tag.Equals("RotationButtons"))
         {
             b.onClick.Invoke();
             buttonPressed = false;
             buttonGestureDone = false;
+        }
+        else if (b && b.tag.Equals("RotationButtons"))
+        {
+            GameObject selObj = Camera.main.GetComponent<SelectObject>().GetSelectedObject().gameObject;
+            ObjectInteraction objIntScript = selObj.GetComponent<ObjectInteraction>();
+
+            if (b.name.Contains("Up"))
+            {
+                objIntScript.TriggerHorizontalSignal(rotSpeed);
+            }
+            else if (b.name.Contains("Down"))
+            {
+                objIntScript.TriggerHorizontalSignal(-rotSpeed);
+            }
+            else if (b.name.Contains("Left"))
+            {
+                objIntScript.TriggerVerticalSignal(-rotSpeed);
+            }
+            else if (b.name.Contains("Right"))
+            {
+                objIntScript.TriggerVerticalSignal(rotSpeed);
+            }
         }
     }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
         Button b = collision.gameObject.GetComponent<Button>();
-        if (b)
+        if (b && !b.tag.Equals("RotationButtons"))
         {
             enteredButton = false;
             b.OnDeselect(null);
             _image.color = normalColor;
             buttonPressed = false;
             _image.color = normalColor;
+        }
+        else if (b && b.tag.Equals("RotationButtons"))
+        {
+            b.OnDeselect(null);
+            GameObject selObj = Camera.main.GetComponent<SelectObject>().GetSelectedObject().gameObject;
+            ObjectInteraction objIntScript = selObj.GetComponent<ObjectInteraction>();
+
+            objIntScript.TriggerHorizontalSignal(0);
+            objIntScript.TriggerVerticalSignal(0);
         }
     }
 

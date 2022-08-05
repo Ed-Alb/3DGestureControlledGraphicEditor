@@ -33,6 +33,11 @@ public class FreeCam : MonoBehaviour
     // Default distance at which camera stops near object
     private float dist = 4f;
 
+    private float _rotX, _rotY;
+    private Vector3 _currentRot;
+    private Vector3 _smoothVelocity = Vector3.zero;
+    private float _smoothTime = .2f;
+
     void Update()
     {
         HandleFocusOnObject();
@@ -177,6 +182,21 @@ public class FreeCam : MonoBehaviour
             mustRotate = false;
             oldRotation = new Quaternion();
         }
+    }
+
+    public void RotateAroundObject(Transform target, float distToTarget, float HorizSignal, float VertSignal)
+    {
+        float x = HorizSignal * freeLookSensitivity;
+        float y = VertSignal * freeLookSensitivity;
+        // Debug.Log(HorizSignal + " " + VertSignal);
+        _rotX += x;
+        _rotY += y;
+
+        Vector3 nextRot = new Vector3(_rotX, _rotY);
+        _currentRot = Vector3.SmoothDamp(_currentRot, nextRot, ref _smoothVelocity, _smoothTime);
+
+        transform.localEulerAngles = _currentRot;
+        transform.position = target.position - transform.forward * distToTarget;
     }
 
     public void UpdateYawPitch(float yaw, float pitch)

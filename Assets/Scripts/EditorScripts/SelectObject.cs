@@ -5,19 +5,23 @@ using UnityEngine.EventSystems;
 
 public class SelectObject : MonoBehaviour
 {
+    #region Old Selection variables <- Useless now!
+    private int blueCol;
+    private Color32 oldObjColor;
+    private bool selected = false;
+    #endregion
+
     private string selectedObj = null;
     public static string lastSelectedObj;
     
     private RaycastHit theObj;
 
-    private bool selected = false;
     private bool flashingIn = true;
     private bool changeColor = false;
 
     private GameObject internalObj;
-    private int blueCol;
+
     public Color32 _objectColor;
-    public Color32 oldObjColor;
 
     public GameObject ScalePanel;
     
@@ -42,7 +46,6 @@ public class SelectObject : MonoBehaviour
         if (!GameObject.Find("Left Hand") || !GameObject.Find("Right Hand"))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            //Ray ray = Camera.main.ScreenPointToRay(GameObject.Find("Left Hand").transform.position);
             HandleMouseDetection(ray);
         }
         else if (GameObject.Find("Left Hand") || GameObject.Find("Right Hand"))
@@ -55,6 +58,7 @@ public class SelectObject : MonoBehaviour
 
     public void HandleMouseDetection(Ray ray)
     {
+        // Select Object by Clicking it
         if (Input.GetMouseButtonDown(0) && selectedObj == null)
         {
             ObjectSelection(ray);
@@ -91,7 +95,7 @@ public class SelectObject : MonoBehaviour
             }
         }
 
-        bool HandsCloseAction = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>().PerformingCloseAction();
+        bool HandsCloseAction = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>().GetCloseAction();
         if (HandsCloseAction && selectedObj != null)
         {
             ObjectDeselection();
@@ -169,7 +173,6 @@ public class SelectObject : MonoBehaviour
         Camera.main.GetComponent<FreeCam>().setMovementRotation(false, false);
 
         theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetAction(actionType.FreeLook);
-
         ChangeObjectMaterial(theObj.transform.gameObject, _originalMaterial);
         theObj.transform.gameObject.GetComponent<Renderer>().material.color = _objectColor;
 
@@ -177,10 +180,13 @@ public class SelectObject : MonoBehaviour
         GameObject StatePanel = GameObject.Find("StatePanel");
         Animator PanelAnim = StatePanel.GetComponent<Animator>();
         PanelAnim.SetTrigger("TriggerPop");
+        theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetArrowsActive(false);
 
         theObj = new RaycastHit();
     }
 
+
+    #region Old Selection Method <- Useless Now!
     void SwitchColors()
     {
         if (selected)
@@ -249,4 +255,5 @@ public class SelectObject : MonoBehaviour
             }
         }
     }
+    #endregion
 }

@@ -166,11 +166,6 @@ public class KinectHandsEvents : MonoBehaviour
         }
     }
 
-    public bool PerformingCloseAction()
-    {
-        return closeActionDone;
-    }
-
     public bool GetRAction()
     {
         return this.RActionDone;

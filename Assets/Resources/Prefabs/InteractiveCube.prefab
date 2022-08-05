@@ -115,8 +115,8 @@ MonoBehaviour:
   dragSpeed: 1
   draggingRotation: 0
   draggingTranslation: 0
-  draggingScale: 0
   action: 0
+  interaction: 0
   FloatingTextPrefab: {fileID: 8580125383792786620, guid: 7b6b87e35807b5e43a453b17ea4d8f7a, type: 3}
   hideText: 0
   FloatingText: {fileID: 0}

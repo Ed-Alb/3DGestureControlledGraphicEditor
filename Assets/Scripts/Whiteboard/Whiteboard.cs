@@ -31,7 +31,7 @@ public class Whiteboard : MonoBehaviour
         // Clean the Whiteboard
         if (Input.GetKeyDown(KeyCode.R) || cleanTable)
         {
-            Debug.Log("clean");
+            // Debug.Log("clean");
             cleanTable = false;
             var r = this.GetComponent<Renderer>();
             Graphics.CopyTexture(oldRendererTexture, texture);
