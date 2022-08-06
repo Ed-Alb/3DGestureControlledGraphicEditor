@@ -143,7 +143,8 @@ public class GestureDetection : MonoBehaviour
     {
         if (database != null)
         {
-            foreach (Gesture g in database.AvailableGestures)
+            var gestures = database.AvailableGestures;
+            foreach (Gesture g in gestures)
             {
                 //Debug.Log(g.Name);
                 _gestureFrameSource.AddGesture(g);

@@ -45,13 +45,23 @@ public class Marker : MonoBehaviour
         _colors = Enumerable.Repeat(_renderer.material.color, _penSize * _penSize).ToArray();
         _tipHeight = _tip.localScale.y;
         _handle = GameObject.Find("Handle").transform;
-        _handle.gameObject.GetComponent<MeshRenderer>().enabled = active;
-        _tip.gameObject.GetComponent<MeshRenderer>().enabled = active;
+        if (_handle.gameObject.GetComponent<MeshRenderer>())
+        {
+            _handle.gameObject.GetComponent<MeshRenderer>().enabled = active;
+        }
+
+        if (_tip.gameObject.GetComponent<MeshRenderer>())
+        {
+            _tip.gameObject.GetComponent<MeshRenderer>().enabled = active;
+        }
     }
 
     void Update()
     {
-        HideMarkerOnWhiteboardExit();
+        if (active)
+        {
+            HideMarkerOnWhiteboardExit();
+        }
 
         RenderMarker(active);
 
@@ -241,8 +251,16 @@ public class Marker : MonoBehaviour
 
     public void RenderMarker(bool activeState)
     {
-        _handle.gameObject.GetComponent<MeshRenderer>().enabled = activeState;
-        _tip.gameObject.GetComponent<MeshRenderer>().enabled = activeState;
+        MeshRenderer handleRenderer = _handle.gameObject.GetComponent<MeshRenderer>();
+        MeshRenderer tipRenderer = _tip.gameObject.GetComponent<MeshRenderer>();
+        if (handleRenderer)
+        {
+            _handle.gameObject.GetComponent<MeshRenderer>().enabled = activeState;
+        }
+        if (tipRenderer)
+        {
+            _tip.gameObject.GetComponent<MeshRenderer>().enabled = activeState;
+        }
         active = activeState;
     }
 }
