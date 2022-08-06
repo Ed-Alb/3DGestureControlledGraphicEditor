@@ -102,12 +102,6 @@ public class HandsView3D : MonoBehaviour
                 }
                 UpdateBodyObject(body, mBodies[body.TrackingId]);
             }
-
-            // Tracking for UI Component
-            /*if (body.IsTracked)
-            {
-                KinectInputModule.instance.TrackBody(body);
-            }*/
         }
 
         #endregion

@@ -27,13 +27,13 @@ public class ColorPicker : MonoBehaviour
 
     public ColorEvent OnColorSelect;
 
-    private InteractionType interaction;
+    private InteractionType _interaction;
     private GestureDetection gestDetect;
     private bool colorPicked = false;
 
     void Start()
     {
-        interaction = InteractionType.Kinect;
+        _interaction = Utilities._interaction;
 
         cam = Camera.main;
 
@@ -43,10 +43,13 @@ public class ColorPicker : MonoBehaviour
 
         _markerTipRenderer = _markerTip.GetComponent<Renderer>();
 
-        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
-        if (gestDetect != null)
+        if (_interaction == InteractionType.Kinect)
         {
-            gestDetect.OnGesture += ListenForColorPick;
+            gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+            if (gestDetect != null)
+            {
+                gestDetect.OnGesture += ListenForColorPick;
+            }
         }
     }
 
@@ -57,8 +60,6 @@ public class ColorPicker : MonoBehaviour
             if (e.confidence > Utilities.LeftHandThreshold && !colorPicked)
             {
                 colorPicked = true;
-                /*gestDetect.OnGesture -= ListenForColorPick;
-                StartCoroutine(ReactivateColorPickListener());*/
             }
         }
     }
@@ -66,12 +67,12 @@ public class ColorPicker : MonoBehaviour
     void Update()
     {
         bool insideRect = false;
-        if (interaction == InteractionType.Kinect)
+        if (_interaction == InteractionType.Kinect)
         {
             Vector3 leftHandPos = GameObject.Find("Left Hand").transform.position;
             insideRect = RectTransformUtility.RectangleContainsScreenPoint(_rect, leftHandPos);
         }
-        else if (interaction == InteractionType.Mouse)
+        else if (_interaction == InteractionType.Mouse)
         {
             insideRect = RectTransformUtility.RectangleContainsScreenPoint(_rect, Input.mousePosition);
         }
@@ -107,12 +108,12 @@ public class ColorPicker : MonoBehaviour
     public void HandleColorSelection()
     {
         Vector2 delta = new Vector2(0, 0);
-        if (interaction == InteractionType.Kinect)
+        if (_interaction == InteractionType.Kinect)
         {
             Vector3 leftHandPos = GameObject.Find("Left Hand").transform.position;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_rect, leftHandPos, null, out delta);
         }
-        else if (interaction == InteractionType.Mouse)
+        else if (_interaction == InteractionType.Mouse)
         {
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_rect, Input.mousePosition, null, out delta);
         }
@@ -144,7 +145,11 @@ public class ColorPicker : MonoBehaviour
             Utilities.PreviewMarkerPanelColor(c, _penPanelImage);
         }
 
-        if (Input.GetMouseButtonDown(0) || colorPicked)
+        bool colorTrigger = (_interaction == InteractionType.Mouse) ?
+                    Input.GetMouseButtonDown(0) :
+                    colorPicked;
+
+        if (colorTrigger)
         {
             colorPicked = false;
             if (WhiteboardHandler._whiteboardActive)
@@ -159,10 +164,4 @@ public class ColorPicker : MonoBehaviour
             }
         }
     }
-
-    /*private IEnumerator ReactivateColorPickListener()
-    {
-        yield return new WaitForSeconds(2);
-        gestDetect.OnGesture += ListenForColorPick;
-    }*/
 }

@@ -30,11 +30,17 @@ public class Marker : MonoBehaviour
     private float _penImageScale = 25f;
     private KinectHandsEvents handsEvents;
 
-    private InteractionType interaction = InteractionType.Kinect;
+    private InteractionType _interaction;
 
     private void Start()
     {
-        handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
+        _interaction = Utilities._interaction;
+
+        if (_interaction == InteractionType.Kinect)
+        {
+            handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
+        }
+
         _renderer = _tip.GetComponent<Renderer>();
         _colors = Enumerable.Repeat(_renderer.material.color, _penSize * _penSize).ToArray();
         _tipHeight = _tip.localScale.y;
@@ -55,8 +61,8 @@ public class Marker : MonoBehaviour
 
             if (isActive())
             {
-                ControlMarker(this.interaction);
-                FollowMouse(this.interaction);
+                ControlMarker(this._interaction);
+                FollowMouse(this._interaction);
                 _colors = Enumerable.Repeat(_renderer.material.color, _penSize * _penSize).ToArray();
             }
 

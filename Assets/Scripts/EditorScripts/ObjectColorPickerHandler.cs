@@ -15,27 +15,21 @@ public class ObjectColorPickerHandler : MonoBehaviour
     private GestureDetection gestDetect;
     private bool colorGestDone = false;
 
+    private InteractionType interaction;
+
     void Start()
     {
-        cam = Camera.main;
-        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
-        if (gestDetect != null)
-        {
-            gestDetect.OnGesture += ListenForColorGesture;
-        }
-    }
+        interaction = Utilities._interaction;
 
-    private void ListenForColorGesture(GestureDetection.EventArgs e)
-    {
-        if (e.name.Contains("Two"))
+        cam = Camera.main;
+
+        if (interaction == InteractionType.Kinect)
         {
-            if (e.confidence > .1f && !WhiteboardHandler._whiteboardActive &&
-                cam.gameObject.GetComponent<SelectObject>().GetSelectedObject())
+            gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+
+            if (gestDetect != null)
             {
-                // Debug.Log("Color picker triggered");
-                colorGestDone = true;
-                gestDetect.OnGesture -= ListenForColorGesture;
-                StartCoroutine(ReactivateColorGesture());
+                gestDetect.OnGesture += ListenForColorGesture;
             }
         }
     }
@@ -45,10 +39,13 @@ public class ObjectColorPickerHandler : MonoBehaviour
         Transform theObj = cam.gameObject.GetComponent<SelectObject>().GetSelectedObject();
         if (theObj)
         {
-            //Debug.Log(theObj.gameObject.name);
             if (!WhiteboardHandler._whiteboardActive)
             {
-                if (Input.GetKeyDown(KeyCode.I) || colorGestDone)
+                bool colorTrigger = (interaction == InteractionType.Mouse) ?
+                    Input.GetKeyDown(KeyCode.I) :
+                    colorGestDone;
+
+                if (colorTrigger)
                 {
                     colorGestDone = false;
                     _colorPickerActive = !_colorPickerActive;
@@ -75,6 +72,22 @@ public class ObjectColorPickerHandler : MonoBehaviour
     {
         _colorPickerActive = false;
         _colorPicker.GetComponent<Image>().gameObject.SetActive(_colorPickerActive);
+    }
+
+
+    private void ListenForColorGesture(GestureDetection.EventArgs e)
+    {
+        if (e.name.Contains("Two"))
+        {
+            if (e.confidence > Utilities.TwoFingersThreshold && !WhiteboardHandler._whiteboardActive &&
+                cam.gameObject.GetComponent<SelectObject>().GetSelectedObject())
+            {
+                // Debug.Log("Color picker triggered");
+                colorGestDone = true;
+                gestDetect.OnGesture -= ListenForColorGesture;
+                StartCoroutine(ReactivateColorGesture());
+            }
+        }
     }
 
     private IEnumerator ReactivateColorGesture()

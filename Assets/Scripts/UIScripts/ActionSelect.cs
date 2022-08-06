@@ -17,8 +17,12 @@ public class ActionSelect : MonoBehaviour
     private Slider YSlider;
     private Slider ZSlider;
 
+    private InteractionType _interaction;
+
     private void Start()
     {
+        _interaction = Utilities._interaction;
+
         // Register the button Events
         rotationButton.onClick.AddListener(() => activateRotationMode());
         draggingButton.onClick.AddListener(() => activateDraggingMode());
@@ -48,7 +52,8 @@ public class ActionSelect : MonoBehaviour
     private void activateDraggingMode()
     {
         Camera cam = Camera.main;
-        cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
+        DeactivateArrows(cam);
+
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
         //Debug.Log("Drag");
         if (selectedObj != null)
@@ -61,7 +66,8 @@ public class ActionSelect : MonoBehaviour
     private void activateScalingMode()
     {
         Camera cam = Camera.main;
-        cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
+        DeactivateArrows(cam);
+
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
         //Debug.Log("Scale");
         if (selectedObj != null)
@@ -75,13 +81,22 @@ public class ActionSelect : MonoBehaviour
     private void activateDeformingMode()
     {
         Camera cam = Camera.main;
-        cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
+        DeactivateArrows(cam);
+
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
         //Debug.Log("Deform");
         if (selectedObj != null)
         {
             HideScalingPanel(true);
             GameObject.Find(selectedObj).GetComponent<ObjectInteraction>().SetAction(actionType.Deform);
+        }
+    }
+
+    private void DeactivateArrows(Camera cam)
+    {
+        if (_interaction == InteractionType.Kinect)
+        {
+            cam.GetComponent<SelectObject>().GetSelectedObject().GetComponent<ObjectInteraction>().SetArrowsActive(false);
         }
     }
 

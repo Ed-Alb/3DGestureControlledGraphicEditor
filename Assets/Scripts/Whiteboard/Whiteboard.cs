@@ -11,25 +11,38 @@ public class Whiteboard : MonoBehaviour
     private GestureDetection gestDetect;
     private bool cleanTable = false;
 
+    private InteractionType _interaction;
+
     void Start()
     {
+        _interaction = Utilities._interaction;
+
         var r = GetComponent<Renderer>();
         texture = new Texture2D((int)textureSize.x, (int)textureSize.y);
         oldRendererTexture = new Texture2D((int)textureSize.x, (int)textureSize.y);
         r.material.mainTexture = texture;
         Graphics.CopyTexture(texture, oldRendererTexture);
 
-        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
-        if (gestDetect != null)
+        if (_interaction == InteractionType.Kinect)
         {
-            gestDetect.OnGesture += ListenForWhiteboardClean;
+            gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+            if (gestDetect != null)
+            {
+                gestDetect.OnGesture += ListenForWhiteboardClean;
+            }
         }
     }
 
     private void Update()
     {
+        // Clean the table by pressing R in Mouse mode or by performing
+        // the close gesture (both hands on head) in the Kinect mode
+        bool cleanTrigger = (_interaction == InteractionType.Mouse) ?
+            Input.GetKeyDown(KeyCode.R) :
+            cleanTable;
+
         // Clean the Whiteboard
-        if (Input.GetKeyDown(KeyCode.R) || cleanTable)
+        if (cleanTrigger)
         {
             // Debug.Log("clean");
             cleanTable = false;

@@ -31,6 +31,13 @@ public class SelectObject : MonoBehaviour
     [SerializeField] private Material _cubeOutlineMaterial;
     [SerializeField] private Material _originalMaterial;
 
+    private InteractionType _interaction;
+
+    private void Start()
+    {
+        _interaction = Utilities._interaction;
+    }
+
     private void Update()
     {
         if (!WhiteboardHandler._whiteboardActive)
@@ -43,12 +50,13 @@ public class SelectObject : MonoBehaviour
     {
         // Make it so that the user can choose at the beginning if he wants to
         // use the kinect sensor or the mouse -- TODO
-        if (!GameObject.Find("Left Hand") || !GameObject.Find("Right Hand"))
+        if (_interaction == InteractionType.Mouse)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             HandleMouseDetection(ray);
         }
-        else if (GameObject.Find("Left Hand") || GameObject.Find("Right Hand"))
+        else if (_interaction == InteractionType.Kinect &&
+            (GameObject.Find("Left Hand") || GameObject.Find("Right Hand")))
         {
             GameObject LeftHand = GameObject.Find("Left Hand");
             GameObject RightHand = GameObject.Find("Right Hand");
@@ -180,7 +188,11 @@ public class SelectObject : MonoBehaviour
         GameObject StatePanel = GameObject.Find("StatePanel");
         Animator PanelAnim = StatePanel.GetComponent<Animator>();
         PanelAnim.SetTrigger("TriggerPop");
-        theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetArrowsActive(false);
+
+        if (_interaction == InteractionType.Kinect)
+        {
+            theObj.transform.gameObject.GetComponent<ObjectInteraction>().SetArrowsActive(false);
+        }
 
         theObj = new RaycastHit();
     }

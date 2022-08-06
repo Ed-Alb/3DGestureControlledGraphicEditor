@@ -25,6 +25,21 @@ public class Utilities : MonoBehaviour
     public static float CloseThreshold = .15f;
     public static float TwoFingersThreshold = .1f;
     public static float WhiteboardThreshold = .3f;
+    public static InteractionType _interaction = InteractionType.Mouse;
+
+    private void Awake()
+    {
+        if (_interaction == InteractionType.Mouse)
+        {
+            GameObject.Find("HandsManager").SetActive(false);
+            GameObject.Find("GestureDetectHandler").SetActive(false);
+        }
+    }
+
+    public static void SetInteractionType(InteractionType interaction)
+    {
+        _interaction = interaction;
+    }
 
     public static bool IsPointerOverUIObject()
     {

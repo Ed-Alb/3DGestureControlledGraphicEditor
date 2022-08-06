@@ -25,7 +25,7 @@ public class ObjectInteraction : MonoBehaviour
     private Vector3 mouseOff;
 
     public actionType action;
-    public InteractionType interaction;
+    public InteractionType _interaction;
 
     private Camera cam;
     private string selectedObj;
@@ -59,7 +59,7 @@ public class ObjectInteraction : MonoBehaviour
 
     private void Start()
     {
-        interaction = InteractionType.Kinect;
+        _interaction = Utilities._interaction;
 
         action = actionType.FreeLook;
         cam = Camera.main;
@@ -68,22 +68,25 @@ public class ObjectInteraction : MonoBehaviour
         YScale = transform.localScale[1];
         ZScale = transform.localScale[2];
 
-        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
-        if (gestDetect)
+        if (_interaction == InteractionType.Kinect)
         {
-            gestDetect.OnGesture += ListenForObjectNameActivateGesture;
+            gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+            if (gestDetect)
+            {
+                gestDetect.OnGesture += ListenForObjectNameActivateGesture;
+            }
+
+            handsView3D = GameObject.Find("HandsManager").GetComponent<HandsView3D>();
+            if (handsView3D)
+            {
+                handsView3D.depthDecode += ListenForDragDepth;
+                handsView3D.depthDecode += ListenForScaleDepth;
+            }
+
+            handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
+
+            ArrowsHolder = GameObject.Find("ArrowsHolder");
         }
-
-        handsView3D = GameObject.Find("HandsManager").GetComponent<HandsView3D>();
-        if (handsView3D)
-        {
-            handsView3D.depthDecode += ListenForDragDepth;
-            handsView3D.depthDecode += ListenForScaleDepth;
-        }
-
-        handsEvents = GameObject.Find("GestureDetectHandler").GetComponent<KinectHandsEvents>();
-
-        ArrowsHolder = GameObject.Find("ArrowsHolder");
 
         OnTextKeyPress += TriggerObjectsName;
     }
@@ -176,13 +179,13 @@ public class ObjectInteraction : MonoBehaviour
     {
         selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
 
-        if (interaction == InteractionType.Mouse && Input.GetMouseButtonUp(0))
+        if (_interaction == InteractionType.Mouse && Input.GetMouseButtonUp(0))
         {
             this.draggingRotation = false;
             this.draggingTranslation = false;
         }
 
-        if (interaction == InteractionType.Kinect && selectedObj != null && name.Equals(selectedObj))
+        if (_interaction == InteractionType.Kinect && selectedObj != null && name.Equals(selectedObj))
         {
             this.draggingRotation = true;
             this.draggingTranslation = true;
@@ -190,12 +193,12 @@ public class ObjectInteraction : MonoBehaviour
 
         if (action == actionType.Rotate && selectedObj.Equals(name))
         {
-            if (interaction == InteractionType.Mouse && this.draggingRotation &&
+            if (_interaction == InteractionType.Mouse && this.draggingRotation &&
                 !Utilities.IsPointerOverUIObject())
             {
                 HandleMouseRotation();
             }
-            else if (interaction == InteractionType.Kinect)
+            else if (_interaction == InteractionType.Kinect)
             {
                 HandleHandsRotation();
             }
@@ -205,15 +208,15 @@ public class ObjectInteraction : MonoBehaviour
         {
             moveObjectTowardsCamera();
 
-            if (interaction == InteractionType.Mouse && this.draggingTranslation
+            if (_interaction == InteractionType.Mouse && this.draggingTranslation
                 && !Utilities.IsPointerOverUIObject())
             {
-                HandleDragging(interaction, Input.mousePosition);
+                HandleDragging(_interaction, Input.mousePosition);
             }
-            else if (interaction == InteractionType.Kinect &&
+            else if (_interaction == InteractionType.Kinect &&
                 !Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform))
             {
-                HandleDragging(interaction, handsView3D.RightHandPosition());
+                HandleDragging(_interaction, handsView3D.RightHandPosition());
             }
         }
 
@@ -223,7 +226,7 @@ public class ObjectInteraction : MonoBehaviour
             YSlider = GameObject.Find("Y-Axis").GetComponent<Slider>();
             ZSlider = GameObject.Find("Z-Axis").GetComponent<Slider>();
 
-            HandleScaling(interaction, Time.deltaTime);
+            HandleScaling(_interaction, Time.deltaTime);
         }
 
         HandleObjectsName();
@@ -325,7 +328,8 @@ public class ObjectInteraction : MonoBehaviour
 
     private void OnMouseDrag()
     {
-        if (selectedObj != null && selectedObj.Equals(this.name) && interaction == InteractionType.Mouse)
+        if (selectedObj != null && selectedObj.Equals(this.name) && 
+            _interaction == InteractionType.Mouse)
         {
             switch (action)
             {
@@ -442,8 +446,8 @@ public class ObjectInteraction : MonoBehaviour
                 float objPlrDistance = Vector3.Magnitude(objPlayerDir);
 
                 bool awayAction = false, towardsAction = false;
-                awayAction = interaction == InteractionType.Kinect ? moveAway : Input.GetKey(KeyCode.Z);
-                towardsAction = interaction == InteractionType.Kinect ? moveTowards : Input.GetKey(KeyCode.X);
+                awayAction = _interaction == InteractionType.Kinect ? moveAway : Input.GetKey(KeyCode.Z);
+                towardsAction = _interaction == InteractionType.Kinect ? moveTowards : Input.GetKey(KeyCode.X);
 
                 if (awayAction)
                 {

@@ -108,6 +108,8 @@ MonoBehaviour:
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
   clickColor: {r: 0.14773874, g: 0.04150939, b: 1, a: 1}
   clickScale: {x: 0.8, y: 0.8, z: 0.8}
+  downScroll: 0
+  upScroll: 0
 --- !u!58 &87225161902950994
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -123,7 +125,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 16
+  m_Radius: 3
 --- !u!50 &-581300013808866867
 Rigidbody2D:
   serializedVersion: 4

@@ -19,6 +19,9 @@ public class KinectUICursor : AbstractKinectUICursor
 
     private float rotSpeed = .15f;
 
+    public bool downScroll = false;
+    public bool upScroll = false;
+
     public override void Start()
     {
         base.Start();
@@ -88,6 +91,19 @@ public class KinectUICursor : AbstractKinectUICursor
                 objIntScript.TriggerVerticalSignal(rotSpeed);
             }
         }
+        
+        if (this.name.Equals("Left Hand"))
+        {
+            if (b && b.name.Equals("ScrollU"))
+            {
+                upScroll = true;
+            }
+
+            if (b && b.name.Equals("ScrollD"))
+            {
+                downScroll = true;
+            }
+        }
     }
 
     private void OnCollisionExit2D(Collision2D collision)
@@ -109,6 +125,20 @@ public class KinectUICursor : AbstractKinectUICursor
 
             objIntScript.TriggerHorizontalSignal(0);
             objIntScript.TriggerVerticalSignal(0);
+        }
+        
+        if (this.name.Equals("Left Hand"))
+        {
+            if (b && b.name.Equals("ScrollU"))
+            {
+                //Debug.Log("exit up button");
+                upScroll = false;
+            }
+            else if (b && b.name.Equals("ScrollD"))
+            {
+                //Debug.Log("exit down button");
+                downScroll = false;
+            }
         }
     }
 

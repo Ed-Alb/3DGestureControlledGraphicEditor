@@ -33,13 +33,20 @@ public class WhiteboardHandler : MonoBehaviour
     private GestureDetection gestDetect;
     private bool whiteboardGest = false, colorGest = false;
 
+    private InteractionType _interaction;
+
     private void Start()
     {
-        gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
-        if (gestDetect != null)
+        _interaction = Utilities._interaction;
+
+        if (_interaction == InteractionType.Kinect)
         {
-            gestDetect.OnGesture += ListenForWhiteboardActivateGesture;
-            gestDetect.OnGesture += ListenForColorGesture;
+            gestDetect = GameObject.Find("GestureDetectHandler").GetComponent<GestureDetection>();
+            if (gestDetect != null)
+            {
+                gestDetect.OnGesture += ListenForWhiteboardActivateGesture;
+                gestDetect.OnGesture += ListenForColorGesture;
+            }
         }
     }
 
@@ -90,8 +97,13 @@ public class WhiteboardHandler : MonoBehaviour
             ExitWhiteboard();
         }
 
-        if ((Input.GetKeyDown(KeyCode.T) || whiteboardGest) 
-            && !cam.transform.gameObject.GetComponent<SelectObject>().GetSelectedObject())
+        bool whiteboardTrigger = (_interaction == InteractionType.Mouse) ?
+                    Input.GetKeyDown(KeyCode.T) :
+                    whiteboardGest;
+
+        Transform selObj = cam.transform.gameObject.GetComponent<SelectObject>().GetSelectedObject();
+
+        if (whiteboardTrigger && !selObj)
         {
             whiteboardGest = false;
             _whiteboardActive = !_whiteboardActive;
@@ -164,8 +176,12 @@ public class WhiteboardHandler : MonoBehaviour
         float penImageScale = _marker.GetComponent<Marker>().getPenImageScale();
         AdjustPenSizeImage(penImageScale);
 
-        // Trigger apparition of ColorPicker while using the whiteboard
-        if (Input.GetKeyDown(KeyCode.C) || colorGest)
+        // Trigger apparition of ColorPicker while in whiteboard mode
+        bool whitebrdColorTrigger = (_interaction == InteractionType.Mouse) ?
+                    Input.GetKeyDown(KeyCode.C) :
+                    colorGest;
+
+        if (whitebrdColorTrigger)
         {
             // Debug.Log("Color Picker Triggered");
             colorGest = false;
