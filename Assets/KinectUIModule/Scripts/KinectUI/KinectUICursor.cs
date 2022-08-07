@@ -17,7 +17,7 @@ public class KinectUICursor : AbstractKinectUICursor
 
     private bool actionDone = false;
 
-    private float rotSpeed = .15f;
+    private float rotSpeed = .05f;
 
     public bool downScroll = false;
     public bool upScroll = false;

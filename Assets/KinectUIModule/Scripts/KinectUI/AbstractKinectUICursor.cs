@@ -20,7 +20,7 @@ public abstract class AbstractKinectUICursor : MonoBehaviour {
 
     protected void Setup()
     {
-        _data = KinectInputModule.instance.GetHandData(_handType);
+        // _data = KinectInputModule.instance.GetHandData(_handType);
         // Make sure we dont block raycasts
         GetComponent<CanvasGroup>().blocksRaycasts = false;
         GetComponent<CanvasGroup>().interactable = false;

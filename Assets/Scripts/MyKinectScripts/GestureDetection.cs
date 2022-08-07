@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Microsoft.Kinect.VisualGestureBuilder;
 using Windows.Kinect;
 using System;
@@ -20,21 +21,18 @@ public class GestureDetection : MonoBehaviour
     }
 
     string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-    private string databasePathLeft = "\\GesturesDatabase\\LeftAction_Left.gba";
-    private string databasePathRight = "\\GesturesDatabase\\RightAction_Right.gba";
-    private string databasePathClose = "\\GesturesDatabase\\CloseAction.gba";
-    private string databasePathWhiteboard = "\\GesturesDatabase\\ActWhiteboard.gba";
-    private string databasePathTwoFings = "\\GesturesDatabase\\TwoFingers.gba";
 
-    public BodySourceManager _BodySource;
+#if !UNITY_EDITOR
+    private string gbdpath = "\\PointingGesture.gbd";
+#else
+    private string gbdpath = "\\GesturesDB\\PointingGesture.gbd";
+#endif
+
+    private VisualGestureBuilderDatabase _gesturesDatabase;
+
+    [SerializeField] private BodySourceManager _BodySource;
 
     private KinectSensor _Sensor;
-
-    private VisualGestureBuilderDatabase _gestureDatabaseLeftHand;
-    private VisualGestureBuilderDatabase _gestureDatabaseRightHand;
-    private VisualGestureBuilderDatabase _gestureDatabaseClose;
-    private VisualGestureBuilderDatabase _gestureDatabaseWhiteboard;
-    private VisualGestureBuilderDatabase _gestureDatabaseTwoFings;
 
     private VisualGestureBuilderFrameSource _gestureFrameSource;
     private VisualGestureBuilderFrameReader _gestureFrameReader;
@@ -42,34 +40,50 @@ public class GestureDetection : MonoBehaviour
     public delegate void GestureAction(EventArgs e);
     public event GestureAction OnGesture;
 
+    private List<Gesture> gests = new List<Gesture>();
+
+    [SerializeField] private Text DebT;
+
     private void Start()
     {
         _Sensor = KinectSensor.GetDefault();
 
-        _gestureDatabaseLeftHand = VisualGestureBuilderDatabase.Create(desktopPath + databasePathLeft);
-        _gestureDatabaseRightHand = VisualGestureBuilderDatabase.Create(desktopPath + databasePathRight);
-        _gestureDatabaseClose = VisualGestureBuilderDatabase.Create(desktopPath + databasePathClose);
-        _gestureDatabaseWhiteboard = VisualGestureBuilderDatabase.Create(desktopPath + databasePathWhiteboard);
-        _gestureDatabaseTwoFings = VisualGestureBuilderDatabase.Create(desktopPath + databasePathTwoFings);
-        
-        _gestureFrameSource = VisualGestureBuilderFrameSource.Create(_Sensor, 0);
-        _gestureFrameReader = _gestureFrameSource.OpenReader();
-
-        if (_gestureFrameReader != null)
+        if (_Sensor != null)
         {
-            _gestureFrameReader.IsPaused = true;
-            _gestureFrameReader.FrameArrived += GestureFrameArrived;
-        }
+            _gestureFrameSource = VisualGestureBuilderFrameSource.Create(_Sensor, 0);
 
-        AddGestureFromDatabase(_gestureDatabaseLeftHand);
-        AddGestureFromDatabase(_gestureDatabaseRightHand);
-        AddGestureFromDatabase(_gestureDatabaseClose);
-        AddGestureFromDatabase(_gestureDatabaseWhiteboard);
-        AddGestureFromDatabase(_gestureDatabaseTwoFings);
+            if (!_Sensor.IsOpen)
+            {
+                _Sensor.Open();
+            }
+
+            _gestureFrameReader = _gestureFrameSource.OpenReader();
+
+            if (_gestureFrameReader != null)
+            {
+                _gestureFrameReader.IsPaused = true;
+                _gestureFrameReader.FrameArrived += GestureFrameArrived;
+            }
+
+#if UNITY_EDITOR
+            _gesturesDatabase = VisualGestureBuilderDatabase.Create(desktopPath + gbdpath);
+#else
+            _gesturesDatabase = VisualGestureBuilderDatabase.Create(Application.streamingAssetsPath + gbdpath);
+#endif
+            Gesture[] gestureArray;
+            using (VisualGestureBuilderDatabase database = _gesturesDatabase)
+            {
+                List<Gesture> ges = new List<Gesture>(_gesturesDatabase.AvailableGestures);
+                gestureArray = ges.ToArray();
+            }
+
+            _gestureFrameSource.AddGestures(gestureArray);
+        }
     }
 
     private void Update()
     {
+        // Cand detecteaza mainile ar trebui sa se opreasca
         if (!_gestureFrameSource.IsTrackingIdValid)
         {
             FindValidBody();
@@ -118,7 +132,7 @@ public class GestureDetection : MonoBehaviour
             if (frame != null)
             {
                 IDictionary<Gesture, DiscreteGestureResult> discreteResults = frame.DiscreteGestureResults;
-
+                //DebT.text = "SUNT Acolo";
                 if (discreteResults != null)
                 {
                     foreach (Gesture gesture in _gestureFrameSource.Gestures)
@@ -127,7 +141,6 @@ public class GestureDetection : MonoBehaviour
                         {
                             DiscreteGestureResult result = null;
                             discreteResults.TryGetValue(gesture, out result);
-
                             if (result != null)
                             {
                                 OnGesture(new EventArgs(gesture.Name, result.Confidence));
@@ -135,19 +148,6 @@ public class GestureDetection : MonoBehaviour
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private void AddGestureFromDatabase(VisualGestureBuilderDatabase database)
-    {
-        if (database != null)
-        {
-            var gestures = database.AvailableGestures;
-            foreach (Gesture g in gestures)
-            {
-                //Debug.Log(g.Name);
-                _gestureFrameSource.AddGesture(g);
             }
         }
     }

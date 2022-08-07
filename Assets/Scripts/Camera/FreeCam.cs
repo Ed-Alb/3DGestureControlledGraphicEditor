@@ -40,6 +40,14 @@ public class FreeCam : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+            #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            #endif
+        }
+
         HandleFocusOnObject();
 
         if (mustMove || mustRotate || WhiteboardHandler._whiteboardActive)
