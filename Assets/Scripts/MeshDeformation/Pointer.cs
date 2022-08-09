@@ -72,10 +72,11 @@ public class Pointer : MonoBehaviour
             MeshDeformer deformer = hit.collider.GetComponent<MeshDeformer>();
             ObjectInteraction hitObject = hit.collider.GetComponent<ObjectInteraction>();
             actionType currAction = actionType.FreeLook;
-            if (hitObject)
+            if (hitObject && !hit.collider.CompareTag("MyTerrain"))
             {
                 currAction = hitObject.GetAction();
             }
+
             if (deformer && currAction == actionType.Deform)
             {
                 Debug.DrawLine(ray.origin, ray.origin + ray.direction * distance, Color.green);
@@ -100,6 +101,20 @@ public class Pointer : MonoBehaviour
                     {
                         deformer.Deform(hit.point, radius, -force);
                     }
+                }
+            }
+
+            // Debug.Log(hit.collider);
+            if (deformer && hit.collider.CompareTag("MyTerrain"))
+            {
+                Debug.Log("Terr");
+                if (Input.GetMouseButton(0))
+                {
+                    deformer.Deform(hit.point, radius * 10, force);
+                }
+                else if (Input.GetMouseButton(1))
+                {
+                    deformer.Deform(hit.point, radius * 10, -force);
                 }
             }
         }

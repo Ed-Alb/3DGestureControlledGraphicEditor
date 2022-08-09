@@ -252,7 +252,8 @@ public class ObjectInteraction : MonoBehaviour
             // Daca e mana stanga inchisa, atunci apar in stanga 4 butoane cu sageti
             // pe care daca se sta cu mana dreapta se va da un semnal obiectului
             // ca trebuie sa se roteasca
-            if (handsEvents.GetRAction())
+            if (handsEvents.GetRAction() && 
+                !Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform))
             {
                 SetArrowsPos(-1);
                 SetArrowsActive(true);
@@ -268,7 +269,8 @@ public class ObjectInteraction : MonoBehaviour
                 transform.rotation = Quaternion.AngleAxis(y, right) * transform.rotation;
             }
 
-            if (handsEvents.GetLAction())
+            if (handsEvents.GetLAction() &&
+                !Utilities.IsHandOverUIObject(GameObject.Find("Left Hand").transform))
             {
                 SetArrowsPos(1);
                 SetArrowsActive(true);
@@ -358,7 +360,9 @@ public class ObjectInteraction : MonoBehaviour
         else if (interaction == InteractionType.Kinect)
         {
             float scaleSpeed = 1.5f;
-            if (handsEvents.GetRAction() && handsEvents.GetLAction())
+            if (handsEvents.GetRAction() && handsEvents.GetLAction() &&
+                (!Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform) ||
+                !Utilities.IsHandOverUIObject(GameObject.Find("Left Hand").transform)))
             {
                 if (handsView3D.RightHandPosition().y < Screen.height / 2.5 &&
                     handsView3D.LeftHandPosition().y < Screen.height / 2.5)
@@ -371,7 +375,8 @@ public class ObjectInteraction : MonoBehaviour
                     ZoomObject(scaleSpeed, deltaTime);
                 }
             }
-            else if (handsEvents.GetRAction())
+            else if (handsEvents.GetRAction() &&
+                !Utilities.IsHandOverUIObject(GameObject.Find("Right Hand").transform))
             {
                 // Daca mana dreapta e stransa, atunci asculta
                 // mana stanga in adancime pentru a scala pe Z
@@ -384,7 +389,8 @@ public class ObjectInteraction : MonoBehaviour
                     ZScale = ChangeAxisScale(ZSlider, ZScale, scaleSpeed, deltaTime);
                 }
             }
-            else if (handsEvents.GetLAction())
+            else if (handsEvents.GetLAction() &&
+                !Utilities.IsHandOverUIObject(GameObject.Find("Left Hand").transform))
             {
                 // Daca mana stanga e stransa, atunci asculta mana
                 // dreapta pe X si Y cumva pentru a scala pe aceste axe

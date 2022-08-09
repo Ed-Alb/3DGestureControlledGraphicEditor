@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Whiteboard
   - RotationButtons
+  - MyTerrain
   layers:
   - Default
   - TransparentFX
