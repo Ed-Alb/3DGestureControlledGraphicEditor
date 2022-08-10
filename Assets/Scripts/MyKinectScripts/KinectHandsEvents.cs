@@ -82,7 +82,7 @@ public class KinectHandsEvents : MonoBehaviour
         {
             CheckTwoFingersAction(e.confidence, e.name, Utilities.TwoFingersThreshold);
         }
-        else if (e.name.Contains("Whiteboard"))
+        else if (e.name.Contains("ActWhiteboard") || e.name.Contains("Terrain"))
         {
             CheckWhiteboardActivation(e.confidence, e.name, Utilities.WhiteboardThreshold);
         }

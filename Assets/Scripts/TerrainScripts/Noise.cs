@@ -6,8 +6,8 @@ public static class Noise
 {
     // return 2d array of floats
     public static float[,] GenerateNoiseMap(
-        int mapWidth, int mapHeight, 
-        float scale, int octaves, int seed, 
+        int mapWidth, int mapHeight,
+        float scale, int octaves, int seed,
         float persistance, float lacunarity, Vector2 offset)
     {
         float[,] noiseMap = new float[mapWidth, mapHeight];
@@ -15,7 +15,8 @@ public static class Noise
         System.Random prng = new System.Random(seed);
         Vector2[] octaveOffsets = new Vector2[octaves];
 
-        for (int i = 0; i < octaves; i++) {
+        for (int i = 0; i < octaves; i++)
+        {
             float offX = prng.Next(-100000, 100000) + offset.x;
             float offY = prng.Next(-100000, 100000) + offset.y;
             octaveOffsets[i] = new Vector2(offX, offY);
@@ -27,12 +28,15 @@ public static class Noise
         float halfW = mapWidth / 2f;
         float halfH = mapHeight / 2f;
 
-        if (scale <= 0) {
+        if (scale <= 0)
+        {
             scale = 0.0001f;
         }
 
-        for (int y = 0; y < mapHeight; y++) {
-            for (int x = 0; x < mapWidth; x++) {
+        for (int y = 0; y < mapHeight; y++)
+        {
+            for (int x = 0; x < mapWidth; x++)
+            {
 
                 float amplitude = 1;
                 float frequency = 1;
@@ -73,5 +77,19 @@ public static class Noise
         }
 
         return noiseMap;
+    }
+
+
+    public static float[,] GenerateBasicMap(int mapWidth, int mapHeight)
+    {
+        float[,] basicMap = new float[mapWidth, mapHeight];
+
+        for (int y = 0; y < mapHeight; y++) {
+            for (int x = 0; x < mapWidth; x++) {
+                basicMap[x, y] = .5f;
+            }
+        }
+
+        return basicMap;
     }
 }

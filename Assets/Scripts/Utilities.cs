@@ -25,7 +25,7 @@ public class Utilities : MonoBehaviour
     public static float CloseThreshold = .15f;
     public static float TwoFingersThreshold = .1f;
     public static float WhiteboardThreshold = .3f;
-    public static InteractionType _interaction = InteractionType.Kinect;
+    public static InteractionType _interaction = InteractionType.Mouse;
 
     private void Awake()
     {

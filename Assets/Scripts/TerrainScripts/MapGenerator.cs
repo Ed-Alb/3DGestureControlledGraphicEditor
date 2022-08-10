@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,7 +12,7 @@ public struct TerrainType {
 
 public class MapGenerator : MonoBehaviour
 {
-    public enum DrawMode { NoiseMap, ColorMap, Mesh };
+    public enum DrawMode { NoiseMap, ColorMap, Mesh, BasicMap };
     public DrawMode drawMode;
 
     const int mapChunkSize = 121;
@@ -33,25 +34,100 @@ public class MapGenerator : MonoBehaviour
     public bool autoUpdate;
     public TerrainType[] regions;
 
+    private float[,] noiseMap;
+    private float[,] basicMap;
+    private Color[] colorMap;
+    private Color[] colorBasicMap;
+    private bool colorAdd;
+    private bool drawOnce = false;
+
+    private Marker _marker;
+
+    private void Start()
+    {
+        GenerateMap();
+        _marker = FindObjectOfType<Marker>();
+        if (_marker)
+        {
+            _marker.OnMarkerDraw += ListenForDrawing;
+        }
+    }
+
+    private void Update()
+    {
+        if (drawMode == DrawMode.BasicMap && !_marker.isDrawing && drawOnce)
+        {
+            DrawOnMap();
+            drawOnce = false;
+        }
+    }
+
+    private void ListenForDrawing(Marker.MousePosArgs e)
+    {
+        drawOnce = true;
+        SetColorMapPixels(e.x, e.y, e.penSize, e.penSize, e.penColor);
+    }
+
+    void SetColorMapPixels(int x, int y, int width, int height, Color c)
+    {
+        colorBasicMap[y * mapChunkSize + x] = c;
+        if (c == Color.blue)
+        {
+            //Debug.Log("Adding Water");
+            SetHeightAndColor(x, y, 1);
+        }
+        else if (c == regions[3].color)
+        {
+            //Debug.Log("Adding Land");
+            SetHeightAndColor(x, y, 3);
+        }
+        else if (c == regions[6].color)
+        {
+            //Debug.Log("Adding Mountains");
+            SetHeightAndColor(x, y, 6);
+        }
+    }
+
+    void SetHeightAndColor(int x, int y, int regIndex)
+    {
+        colorBasicMap[y * mapChunkSize + x] = regions[regIndex].color;
+        basicMap[x, y] = (float)(regions[regIndex].height - .05);
+    }
+
     public void GenerateMap() {
-        float[,] noiseMap = Noise.GenerateNoiseMap(
+        noiseMap = Noise.GenerateNoiseMap(
             mapChunkSize, mapChunkSize,
             noiseScale, octaves, seed,
             persistance, lacunarity, offset
         );
 
-        Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
+        basicMap = Noise.GenerateBasicMap(mapChunkSize, mapChunkSize);
 
-        for (int y = 0; y < mapChunkSize; y++)
-        {
-            for (int x = 0; x < mapChunkSize; x++)
-            {
+        colorMap = new Color[mapChunkSize * mapChunkSize];
+        colorBasicMap = new Color[mapChunkSize * mapChunkSize];
+
+        for (int y = 0; y < mapChunkSize; y++) {
+            for (int x = 0; x < mapChunkSize; x++) {
                 float currentHeight = noiseMap[x, y];
                 for (int i = 0; i < regions.Length; i++)
                 {
                     if (currentHeight <= regions[i].height)
                     {
                         colorMap[y * mapChunkSize + x] = regions[i].color;
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (int y = 0; y < mapChunkSize; y++) {
+            for (int x = 0; x < mapChunkSize; x++) {
+                float currentHeight = basicMap[x, y];
+                for (int i = 0; i < regions.Length; i++)
+                {
+                    if (currentHeight <= regions[i].height)
+                    {
+                        colorBasicMap[y * mapChunkSize + x] = regions[i].color;
                         break;
                     }
                 }
@@ -72,8 +148,27 @@ public class MapGenerator : MonoBehaviour
         {
             display.DrawMesh(
                 MeshGenerator.GenerateTerrainMesh(noiseMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail),
-                TextureGenerator.TextureFromColorMap(
-                    colorMap, mapChunkSize, mapChunkSize)
+                TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize)
+                );
+        }
+        else if (drawMode == DrawMode.BasicMap)
+        {
+            display.DrawMesh(
+                MeshGenerator.GenerateTerrainMesh(basicMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail),
+                TextureGenerator.TextureFromColorMap(colorBasicMap, mapChunkSize, mapChunkSize)
+                );
+        }
+        
+    }
+
+    void DrawOnMap()
+    {
+        MapDisplay display = FindObjectOfType<MapDisplay>();
+        if (drawMode == DrawMode.BasicMap)
+        {
+            display.DrawMesh(
+                MeshGenerator.GenerateTerrainMesh(basicMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail),
+                TextureGenerator.TextureFromColorMap(colorBasicMap, mapChunkSize, mapChunkSize)
                 );
         }
     }

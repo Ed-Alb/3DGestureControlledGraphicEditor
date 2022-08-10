@@ -3,16 +3,34 @@ using UnityEngine;
 
 public class Marker : MonoBehaviour
 {
+    public struct MousePosArgs
+    {
+        public int x;
+        public int y;
+        public int penSize;
+        public Color penColor;
+
+        public MousePosArgs(int _x, int _y, int _penSize, Color c)
+        {
+            x = _x;
+            y = _y;
+            penSize = _penSize;
+            penColor = c;
+        }
+    }
+
     private bool active = false;
 
     Vector3 pos;
     public float zOffset = 2f;
-    public float pushedPos = 2f;
-    public float normalPos = 4f;
+    public float pushedPos = 2.2f;
+    public float normalPos = 2f;
 
     [SerializeField] private Transform _tip;
-    private Transform _handle;
-    [SerializeField] private int _penSize = 15;
+    [SerializeField] private Transform _handle;
+
+    [Range(1,15)]
+    [SerializeField] public int _penSize = 15;
 
     private Renderer _renderer;
     private Color[] _colors;
@@ -27,10 +45,14 @@ public class Marker : MonoBehaviour
     private Quaternion _lastTouchRot;
     private bool _touchedLastFrame;
 
-    private float _penImageScale = 25f;
+    public float _penImageScale = 25f;
     private KinectHandsEvents handsEvents;
 
     private InteractionType _interaction;
+
+    public delegate void MarkerAction(MousePosArgs e);
+    public event MarkerAction OnMarkerDraw;
+    public bool isDrawing = false;
 
     private void Start()
     {
@@ -44,9 +66,10 @@ public class Marker : MonoBehaviour
         _renderer = _tip.GetComponent<Renderer>();
         _colors = Enumerable.Repeat(_renderer.material.color, _penSize * _penSize).ToArray();
         _tipHeight = _tip.localScale.y;
-        _handle = GameObject.Find("Handle").transform;
+
         if (_handle.gameObject.GetComponent<MeshRenderer>())
         {
+            //Debug.Log("aici");
             _handle.gameObject.GetComponent<MeshRenderer>().enabled = active;
         }
 
@@ -67,7 +90,16 @@ public class Marker : MonoBehaviour
 
         if (WhiteboardHandler._whiteboardActive)
         {
-            AdjustPenSize();
+            if (WhiteboardHandler.SketchMode)
+            {
+                AdjustPenSize();
+            }
+            else if (WhiteboardHandler.TerrainMode)
+            {
+                _penSize = 1;
+
+                _penImageScale = Utilities.remap(_penSize, 2f, 15f, 12.5f, 25f);
+            }
 
             if (isActive())
             {
@@ -79,13 +111,26 @@ public class Marker : MonoBehaviour
         }
     }
 
+    private void OnValidate()
+    {
+        if (_penSize < 2)
+        {
+            _penSize = 2;
+        }
+
+        if (_penSize > 15)
+        {
+            _penSize = 15;
+        }
+    }
+
     private void AdjustPenSize()
     {
         Vector2 scrollData = Input.mouseScrollDelta;
         if (scrollData != Vector2.zero)
         {
             _penSize += (int)scrollData.y;
-            _penSize = Mathf.Clamp(_penSize, 2, 15);
+            _penSize = Mathf.Clamp(_penSize, 1, 15);
 
             _penImageScale = Utilities.remap(_penSize, 2f, 15f, 12.5f, 25f);
         }
@@ -123,12 +168,14 @@ public class Marker : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                zOffset += 2f;
+                isDrawing = true;
+                zOffset += .2f;
             }
 
             if (Input.GetMouseButtonUp(0))
             {
-                zOffset -= 2f;
+                isDrawing = false;
+                zOffset -= .2f;
                 _whiteboard = null;
                 _touchedLastFrame = false;
             }
@@ -143,6 +190,7 @@ public class Marker : MonoBehaviour
             if (handsEvents.GetRAction() && handsEvents.GetLAction()) { return; }
             else if (handsEvents.GetRAction())
             {
+                isDrawing = true;
                 zOffset = pushedPos;
                 pos = GameObject.Find("Right Hand").transform.position;
                 Draw(pos);
@@ -150,10 +198,15 @@ public class Marker : MonoBehaviour
             }
             else if (handsEvents.GetLAction())
             {
+                isDrawing = true;
                 zOffset = pushedPos;
                 pos = GameObject.Find("Left Hand").transform.position;
                 Draw(pos);
                 return;
+            }
+            else if (!handsEvents.GetRAction() && !handsEvents.GetLAction())
+            {
+                isDrawing = false;
             }
             zOffset = normalPos;
             _whiteboard = null;
@@ -192,6 +245,10 @@ public class Marker : MonoBehaviour
                     {
                         var lerpX = (int)Mathf.Lerp(_lastTouchPos.x, x, step);
                         var lerpY = (int)Mathf.Lerp(_lastTouchPos.y, y, step);
+                        if (WhiteboardHandler.TerrainMode)
+                        {
+                            OnMarkerDraw(new MousePosArgs(lerpX, lerpY, _penSize, _renderer.material.color));
+                        }
                         _whiteboard.texture.SetPixels(lerpX, lerpY, _penSize, _penSize, _colors);
                     }
                     transform.rotation = _lastTouchRot;
