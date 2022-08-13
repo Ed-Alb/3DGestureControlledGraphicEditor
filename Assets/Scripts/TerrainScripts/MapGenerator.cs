@@ -90,8 +90,57 @@ public class MapGenerator : MonoBehaviour
 
     void SetHeightAndColor(int x, int y, int regIndex)
     {
-        colorBasicMap[y * mapChunkSize + x] = regions[regIndex].color;
-        basicMap[x, y] = (float)(regions[regIndex].height - .05);
+        int radius = 2;
+        FillBundariesWithColor(x, y, regIndex, radius);
+
+        System.Random rnd = new System.Random(DateTime.Now.Millisecond);
+        int minVal = (int) ((regions[regIndex].height) * 100);
+        int maxVal = (int) ((regions[regIndex+1].height) * 100);
+
+        //Debug.Log(minVal + " " + maxVal);
+
+        basicMap[x, y] = (float) rnd.Next(minVal, maxVal) / 100;
+    }
+
+    void FillBundariesWithColor(int x, int y, int regIndex, int radius)
+    {
+        int step = 1, numSteps = 1, stepSize = 1, limit = (radius + 1) * (radius + 1);
+        int turnCounter = 0;
+        int state = 0;
+
+        for (int i = 0; i < limit; i++)
+        {
+            //Debug.Log(i);
+            colorBasicMap[y * mapChunkSize + x] = regions[regIndex].color;
+            switch (state)
+            {
+                case 0:
+                    x += stepSize;
+                    break;
+                case 1:
+                    y -= stepSize;
+                    break;
+                case 2:
+                    x -= stepSize;
+                    break;
+                case 3:
+                    y += stepSize;
+                    break;
+            }
+
+            if (step % numSteps == 0)
+            {
+                state = (state + 1) % 4;
+
+                turnCounter++;
+                if (turnCounter % 2 == 0)
+                {
+                    numSteps++;
+                }
+            }
+
+            step++;
+        }
     }
 
     public void GenerateMap() {

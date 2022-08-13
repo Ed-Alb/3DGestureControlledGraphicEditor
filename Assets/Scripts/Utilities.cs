@@ -26,6 +26,9 @@ public class Utilities : MonoBehaviour
     public static float TwoFingersThreshold = .1f;
     public static float WhiteboardThreshold = .3f;
     public static InteractionType _interaction = InteractionType.Mouse;
+    public static bool ownTerrain = false;
+
+    public MapGenerator mapGenerator;
 
     private void Awake()
     {
@@ -33,6 +36,15 @@ public class Utilities : MonoBehaviour
         {
             GameObject.Find("HandsManager").SetActive(false);
             GameObject.Find("GestureDetectHandler").SetActive(false);
+        }
+
+        if (ownTerrain)
+        {
+            mapGenerator.drawMode = MapGenerator.DrawMode.BasicMap;
+        }
+        else
+        {
+            mapGenerator.drawMode = MapGenerator.DrawMode.Mesh;
         }
     }
 

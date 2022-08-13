@@ -147,11 +147,11 @@ public class WhiteboardHandler : MonoBehaviour
         }
 
         bool terrainWhiteboardTrigger = false;
-        if (_interaction == InteractionType.Mouse && !SketchMode)
+        if (_interaction == InteractionType.Mouse && !SketchMode && Utilities.ownTerrain)
         {
             terrainWhiteboardTrigger = Input.GetKeyDown(KeyCode.Y);
         }
-        else if (_interaction == InteractionType.Kinect && !SketchMode)
+        else if (_interaction == InteractionType.Kinect && !SketchMode && Utilities.ownTerrain)
         {
             terrainWhiteboardTrigger = terrWhiteGest; // another gesture type here
         }
