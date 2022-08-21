@@ -90,7 +90,6 @@ public class HandsView3D : MonoBehaviour
         #endregion
 
         #region Create Kinect Bodies
-
         foreach (var body in data)
         {
             if (body == null) { continue; }

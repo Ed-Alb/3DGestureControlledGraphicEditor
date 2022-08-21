@@ -59,8 +59,25 @@ public class DisplayState : MonoBehaviour
         }
         else
         {
-            ModeImage.sprite = sprites["Camera"];
-            stateText.text = "Free Look";
+            if (!WhiteboardHandler._whiteboardActive)
+            {
+                setTextAndState("Camera", "Free Look");
+            }
+            else
+            {
+                WhiteboardHandler wh = FindObjectOfType<WhiteboardHandler>();
+                if (wh)
+                {
+                    if (wh.GetWhiteboardActive() == WhiteboardType.Sketch)
+                    {
+                        setTextAndState("Whiteboard", "Whiteboard");
+                    }
+                    else if (wh.GetWhiteboardActive() == WhiteboardType.Terrain)
+                    {
+                        setTextAndState("Map", "Terr Builder");
+                    }
+                }
+            }
         }
     }
 

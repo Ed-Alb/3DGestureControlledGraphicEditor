@@ -142,29 +142,6 @@ public class KinectUICursor : AbstractKinectUICursor
         }
     }
 
-    public override void ProcessData()
-    {
-        // update pos
-        transform.position = _data.GetHandScreenPosition();
-        Debug.Log(name + " " + transform.position);
-
-        if (_data.IsPressing)
-        {
-            _image.color = clickColor;
-            _image.transform.localScale = clickScale;
-            return;
-        }
-        if (_data.IsHovering)
-        {
-            _image.color = hoverColor;
-        }
-        else
-        {
-            _image.color = normalColor;
-        }
-        _image.transform.localScale = _initScale;
-    }
-
     public Vector3 GetHandCursorPosition()
     {
         return this.transform.position;

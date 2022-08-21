@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using Windows.Kinect;
@@ -6,11 +6,8 @@ using Windows.Kinect;
 /// Abstract UI component class for hand cursor objects
 /// </summary>
 [RequireComponent(typeof(CanvasGroup), typeof(Image))]
-public abstract class AbstractKinectUICursor : MonoBehaviour {
-
-    [SerializeField]
-    protected KinectUIHandType _handType;
-    protected KinectInputData _data;
+public abstract class AbstractKinectUICursor : MonoBehaviour
+{
     protected Image _image;
 
     public virtual void Start()
@@ -20,7 +17,6 @@ public abstract class AbstractKinectUICursor : MonoBehaviour {
 
     protected void Setup()
     {
-        // _data = KinectInputModule.instance.GetHandData(_handType);
         // Make sure we dont block raycasts
         GetComponent<CanvasGroup>().blocksRaycasts = false;
         GetComponent<CanvasGroup>().interactable = false;
@@ -31,6 +27,4 @@ public abstract class AbstractKinectUICursor : MonoBehaviour {
     public virtual void Update()
     {
     }
-
-    public abstract void ProcessData();
 }

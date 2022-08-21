@@ -21,17 +21,18 @@ public class ActionsPanelManager : MonoBehaviour
     {
         Camera cam = Camera.main;
         string selectedObj = cam.GetComponent<SelectObject>().GetSelectedObjectName();
+
         // Daca s-a selectat un obiect, se deschide Panoul
         if (selectedObj != null && !selected)
         {
             selected = true;
-            ActivatePanel(true);
+            ActivatePanel(true, selectedObj);
         }
 
         // Start Close Process
         if (selectedObj == null && selected)
         {
-            ActivatePanel(false);
+            ActivatePanel(false, null);
             selected = false;
         }
 
@@ -42,19 +43,29 @@ public class ActionsPanelManager : MonoBehaviour
     }
 
     // Activate or Deactivate Panel and play its Animation
-    private void ActivatePanel(bool act)
+    private void ActivatePanel(bool act, string selObj)
     {
         if (act)
         {
             needToClose = false;
-            MakeButtonsInteractable(true);
+            if (selObj.Contains("Cube") || selObj.Contains("Cylinder"))
+            {
+                // Make the deformation button unavailable
+                MakeButtonsInteractable(true, false);
+            }
+            else
+            {
+                // Make the deformation button available
+                MakeButtonsInteractable(true, true);
+            }
             MainPanel.SetActive(act);
             PlayPanelAnimation(true);
         }
         else
         {
             needToClose = true;
-            MakeButtonsInteractable(false);
+            // Make all buttons unavailable
+            MakeButtonsInteractable(false, true);
             PlayPanelAnimation(false);
         }
     }
@@ -90,11 +101,19 @@ public class ActionsPanelManager : MonoBehaviour
         }
     }
 
-    private void MakeButtonsInteractable(bool state)
+    private void MakeButtonsInteractable(bool state, bool deformable)
     {
         _rotateButton.interactable = state;
         _dragButton.interactable = state;
         _scaleButton.interactable = state;
-        _deformButton.interactable = state;
+
+        if (deformable)
+        {
+            _deformButton.interactable = state;
+        }
+        else
+        {
+            _deformButton.interactable = false;
+        }
     }
 }

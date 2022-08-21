@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum WhiteboardType { Sketch, Terrain };
+public enum WhiteboardType { Sketch, Terrain, None };
 
 public class WhiteboardHandler : MonoBehaviour
 {
@@ -47,7 +47,7 @@ public class WhiteboardHandler : MonoBehaviour
     private bool whiteboardGest = false, terrWhiteGest = false, colorGest = false;
 
     private InteractionType _interaction;
-    private WhiteboardType whiteboardType = WhiteboardType.Sketch;
+    private WhiteboardType whiteboardType = WhiteboardType.None;
 
     private void Start()
     {
@@ -181,6 +181,7 @@ public class WhiteboardHandler : MonoBehaviour
 
         if (!_whiteboardActive)
         {
+            whiteboardType = WhiteboardType.None;
             ActivateAllButtons(true);
             cam.transform.position = lastCamPos;
             cam.transform.rotation = lastCamRot;
@@ -202,7 +203,7 @@ public class WhiteboardHandler : MonoBehaviour
             lastCamRot = cam.transform.rotation;
 
             GameObject.Find("ObjectsPanel").GetComponent<SpawnObject>().HideObjectsName();
-
+            whiteboardType = type;
             if (type == WhiteboardType.Sketch)
             {
                 _marker.GetComponent<Marker>()._penSize = 15;
@@ -356,6 +357,11 @@ public class WhiteboardHandler : MonoBehaviour
                 component.gameObject.GetComponent<Renderer>().enabled = state;
             }
         }
+    }
+
+    public WhiteboardType GetWhiteboardActive()
+    {
+        return this.whiteboardType;
     }
 
     private IEnumerator ReactivateWhiteGesture()

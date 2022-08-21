@@ -8,7 +8,7 @@ public class AdaptImage : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (stateImage.sprite.name.Equals("Camera"))
+        if (stateImage.sprite.name.Equals("Camera") || stateImage.sprite.name.Equals("Whiteboard"))
         {
             stateImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 120);
             stateImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 110);
@@ -36,6 +36,12 @@ public class AdaptImage : MonoBehaviour
         {
             stateImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 120);
             stateImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 110);
+        }
+
+        if (stateImage.sprite.name.Equals("Map"))
+        {
+            stateImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 100);
+            stateImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 120);
         }
     }
 }

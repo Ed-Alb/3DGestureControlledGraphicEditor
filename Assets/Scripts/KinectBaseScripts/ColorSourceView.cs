@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 using Windows.Kinect;
 using System;
 
@@ -15,17 +15,32 @@ public class ColorSourceView : MonoBehaviour
     
     void Update()
     {
-        if (ColorSourceManager == null)
-        {
-            return;
-        }
-        
-        _ColorManager = ColorSourceManager.GetComponent<ColorSourceManager>();
-        if (_ColorManager == null)
-        {
-            return;
-        }
+        KinectSensor _Sensor = KinectSensor.GetDefault();
 
-        gameObject.GetComponent<Renderer>().material.mainTexture = _ColorManager.GetColorTexture();
+        if (_Sensor != null)
+        {
+            if (_Sensor.IsAvailable)
+            {
+                if (ColorSourceManager == null)
+                {
+                    return;
+                }
+
+                _ColorManager = ColorSourceManager.GetComponent<ColorSourceManager>();
+                if (_ColorManager == null)
+                {
+                    return;
+                }
+
+                var rend = GetComponent<MeshRenderer>();
+                rend.enabled = true;
+                gameObject.GetComponent<Renderer>().material.mainTexture = _ColorManager.GetColorTexture();
+            }
+            else
+            {
+                var rend = GetComponent<MeshRenderer>();
+                rend.enabled = false;
+            }
+        }
     }
 }
