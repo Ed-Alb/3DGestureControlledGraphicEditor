@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<GestureBuilderFile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<ProjectFile>
+		<Header>
+			<Date>2022-08-02</Date>
+			<Time>17:58:57.6745153+03:00</Time>
+			<Version>5</Version>
+			<Type>AdaBoostTrigger</Type>
+			<Function>
+				<Type>Analysis</Type>
+				<ProjectAttribute Name="PointLeftHand_Left" Type="BOOL" />
+				<ProjectAccompanyAttributes>
+					<Items Name="Confidence" Type="FLOAT" />
+					<Items Name="FirstFrameDetected" Type="BOOL" />
+				</ProjectAccompanyAttributes>
+				<DefaultTag xsi:type="BoolAttribute" Name="PointLeftHand_Left" Value="false" />
+			</Function>
+			<ID>c05f87a0-c076-4f39-bd54-d3772e8a56c3</ID>
+		</Header>
+		<Project_Data>
+			<Files>
+				<Name />
+				<Content>
+					<Items>
+						<File>../../Documents/Kinect Studio/Repository/20220802_103420_00.vgbclip</File>
+					</Items>
+					<Items>
+						<File>../../Documents/Kinect Studio/Repository/20220802_130500_00.vgbclip</File>
+					</Items>
+					<Items>
+						<File>../../Documents/Kinect Studio/Repository/20220802_132858_00.vgbclip</File>
+					</Items>
+				</Content>
+			</Files>
+		</Project_Data>
+		<UI_State />
+		<Attributes>
+			<Items xsi:type="BoolAttribute" Name="Mirror Left Right" Value="false" />
+		</Attributes>
+	</ProjectFile>
+</GestureBuilderFile>

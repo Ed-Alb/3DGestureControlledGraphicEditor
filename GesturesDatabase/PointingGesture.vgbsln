@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<GestureBuilderFile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<SolutionFile>
+		<Header>
+			<Date>2022-08-10</Date>
+			<Time>12:45:37.3947627+03:00</Time>
+			<Version>1</Version>
+			<Type>Solution</Type>
+			<ID>cc56b419-c6cb-4cd0-a6e9-adf913a1432b</ID>
+		</Header>
+		<Solution_Data>
+			<Files>
+				<Name />
+				<Content>
+					<Items>
+						<File>ActWhiteboard.vgbproj</File>
+					</Items>
+					<Items>
+						<File>ActWhiteboard.a.vgbproj</File>
+					</Items>
+					<Items>
+						<File>CloseAction.vgbproj</File>
+					</Items>
+					<Items>
+						<File>CloseAction.a.vgbproj</File>
+					</Items>
+					<Items>
+						<File>LeftAction_Left.vgbproj</File>
+					</Items>
+					<Items>
+						<File>LeftAction_Left.a.vgbproj</File>
+					</Items>
+					<Items>
+						<File>RightAction_Right.vgbproj</File>
+					</Items>
+					<Items>
+						<File>RightAction_Right.a.vgbproj</File>
+					</Items>
+					<Items>
+						<File>TerrainWhiteboard.vgbproj</File>
+					</Items>
+					<Items>
+						<File>TerrainWhiteboard.a.vgbproj</File>
+					</Items>
+					<Items>
+						<File>TwoFingers.vgbproj</File>
+					</Items>
+					<Items>
+						<File>TwoFingers.a.vgbproj</File>
+					</Items>
+				</Content>
+			</Files>
+		</Solution_Data>
+		<UI_State />
+		<Attributes />
+	</SolutionFile>
+</GestureBuilderFile>
